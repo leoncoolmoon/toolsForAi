@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LM Studio Performance Monitor</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
+  /* ── Dark theme (default) ── */
+  :root, [data-theme="dark"] {
+    --bg: #0a0c10;
+    --bg2: #0f1117;
+    --bg3: #141820;
+    --panel: #111520;
+    --border: #1e2535;
+    --border2: #263048;
+    --accent: #0ea5e9;
+    --accent2: #38bdf8;
+    --accent-dim: #0c4a6e;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --purple: #a855f7;
+    --text-primary: #e2e8f0;
+    --text-secondary: #64748b;
+    --text-muted: #334155;
+    --scanline: rgba(0,0,0,0.03);
+    --chart-tps: #0ea5e9;
+    --chart-ttft: #22c55e;
+  }
+
+  /* ── Light theme ── */
+  [data-theme="light"] {
+    --bg: #f1f5f9;
+    --bg2: #ffffff;
+    --bg3: #f8fafc;
+    --panel: #ffffff;
+    --border: #e2e8f0;
+    --border2: #cbd5e1;
+    --accent: #0284c7;
+    --accent2: #0369a1;
+    --accent-dim: #e0f2fe;
+    --green: #16a34a;
+    --amber: #d97706;
+    --red: #dc2626;
+    --purple: #9333ea;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --scanline: rgba(0,0,0,0.00);
+    --chart-tps: #0284c7;
+    --chart-ttft: #16a34a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, var(--scanline) 2px, var(--scanline) 4px);
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  .app {
+    display: grid;
+    grid-template-rows: 48px 1fr;
+    height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+    position: relative;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent) 0%, transparent 60%);
+  }
+  .logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent2);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-dot {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent);
+    animation: blink 2s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .conn-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 24px;
+  }
+  .conn-section input {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 3px;
+    outline: none;
+    transition: border-color 0.2s;
+    height: 28px;
+  }
+  .conn-section input:focus { border-color: var(--accent-dim); }
+  .conn-section input.ip-input { width: 160px; }
+  .conn-section input.port-input { width: 70px; }
+
+  .btn {
+    background: var(--accent-dim);
+    border: 1px solid var(--accent);
+    color: var(--accent2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 5px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: all 0.15s;
+    height: 28px;
+    white-space: nowrap;
+  }
+  .btn:hover { background: rgba(14,165,233,0.25); box-shadow: 0 0 12px rgba(14,165,233,0.2); }
+  .btn:active { transform: scale(0.97); }
+
+  .conn-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .status-led {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    transition: all 0.3s;
+  }
+  .status-led.online { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .status-led.offline { background: var(--red); box-shadow: 0 0 6px var(--red); }
+  .status-led.connecting { background: var(--amber); box-shadow: 0 0 6px var(--amber); animation: blink 0.8s infinite; }
+
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .auto-refresh {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .auto-refresh input[type=checkbox] { accent-color: var(--accent); cursor: pointer; }
+  .auto-refresh select {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 2px 4px;
+    border-radius: 2px;
+    outline: none;
+  }
+  .clock {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ── Theme switcher ── */
+  .theme-switcher {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px;
+  }
+  .theme-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 7px;
+    border-radius: 3px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: all 0.15s;
+    line-height: 1;
+  }
+  .theme-btn:hover { color: var(--text-secondary); background: var(--border); }
+  .theme-btn.active { background: var(--accent-dim); color: var(--accent2); }
+
+  /* ── Main Layout ── */
+  .main {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 12px 0;
+  }
+  .sidebar::-webkit-scrollbar { width: 3px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .sidebar-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 6px 16px 4px;
+  }
+
+  .model-item {
+    padding: 8px 16px;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .model-item:hover { background: var(--bg3); }
+  .model-item.active {
+    background: rgba(14,165,233,0.06);
+    border-left-color: var(--accent);
+  }
+  .model-item-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+  }
+  .model-item-meta {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .model-state-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .model-state-dot.loaded { background: var(--green); }
+  .model-state-dot.unloaded { background: var(--text-muted); }
+
+  .sidebar-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 16px;
+  }
+
+  /* ── Content ── */
+  .content {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  /* ── Summary Row ── */
+  .summary-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .summary-card {
+    background: var(--panel);
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+  }
+  .summary-card:hover { background: var(--bg3); }
+  .summary-card.active { background: rgba(14,165,233,0.05); }
+  .summary-card.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+  }
+  .sc-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+  .sc-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+  .sc-value.accent { color: var(--accent2); }
+  .sc-value.green { color: var(--green); }
+  .sc-value.amber { color: var(--amber); }
+  .sc-unit {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .mini-spark {
+    margin-top: 6px;
+    height: 24px;
+  }
+
+  /* ── Detail Panel ── */
+  .detail-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    overflow: hidden;
+  }
+
+  .chart-panel {
+    background: var(--panel);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+  }
+  .panel-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .panel-current {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+  .panel-current span {
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  .chart-wrap {
+    flex: 1;
+    position: relative;
+    min-height: 0;
+  }
+  canvas.chart-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* ── Info Grid (bottom right) ── */
+  .info-grid {
+    background: var(--panel);
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    align-content: start;
+  }
+  .info-row {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+  }
+  .info-row:nth-child(2n) { border-right: none; }
+  .info-row:nth-last-child(-n+2) { border-bottom: none; }
+  .info-key {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 3px;
+  }
+  .info-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .info-val.accent { color: var(--accent2); }
+  .info-val.green { color: var(--green); }
+  .info-val.amber { color: var(--amber); }
+  .info-val.purple { color: var(--purple); }
+
+  /* ── History Table ── */
+  .history-panel {
+    background: var(--panel);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    grid-column: span 2;
+  }
+  .history-header {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .history-table-wrap {
+    flex: 1;
+    overflow-y: auto;
+  }
+  .history-table-wrap::-webkit-scrollbar { width: 3px; }
+  .history-table-wrap::-webkit-scrollbar-thumb { background: var(--border2); }
+
+  table.htable {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+  table.htable thead th {
+    background: var(--bg3);
+    color: var(--text-muted);
+    text-align: left;
+    padding: 6px 14px;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    position: sticky;
+    top: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  table.htable tbody tr {
+    border-bottom: 1px solid rgba(30,37,53,0.5);
+    transition: background 0.1s;
+  }
+  table.htable tbody tr:hover { background: var(--bg3); }
+  table.htable tbody td {
+    padding: 6px 14px;
+    color: var(--text-secondary);
+  }
+  table.htable tbody td.val { color: var(--text-primary); }
+  table.htable tbody td.accent { color: var(--accent2); }
+  table.htable tbody td.green { color: var(--green); }
+  table.htable tbody td.amber { color: var(--amber); }
+  table.htable tbody td.purple { color: var(--purple); }
+
+  .empty-msg {
+    padding: 40px;
+    text-align: center;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+  }
+
+  /* ── Tooltip ── */
+  .tip {
+    position: fixed;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    padding: 6px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-primary);
+    border-radius: 3px;
+    pointer-events: none;
+    z-index: 100;
+    display: none;
+    white-space: nowrap;
+    line-height: 1.6;
+  }
+
+  .no-data {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .no-data-icon {
+    font-size: 28px;
+    opacity: 0.3;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      LMS Monitor
+    </div>
+    <div class="conn-section">
+      <input type="text" class="ip-input" id="ip" value="localhost" placeholder="IP 地址" />
+      <span style="color:var(--text-muted);font-family:monospace">:</span>
+      <input type="text" class="port-input" id="port" value="1234" placeholder="Port" />
+      <button class="btn" id="btn-conn" onclick="connect()">连接</button>
+    </div>
+    <div class="conn-status">
+      <div class="status-led" id="led"></div>
+      <span id="status-txt">OFFLINE</span>
+    </div>
+    <div class="header-right">
+      <label class="auto-refresh">
+        <input type="checkbox" id="auto" onchange="toggleAuto()" />
+        AUTO
+        <select id="interval">
+          <option value="3000">3s</option>
+          <option value="5000" selected>5s</option>
+          <option value="10000">10s</option>
+        </select>
+      </label>
+      <div class="theme-switcher">
+        <button class="theme-btn" id="tbtn-light" onclick="setTheme('light')" title="浅色模式">☀</button>
+        <button class="theme-btn active" id="tbtn-dark" onclick="setTheme('dark')" title="暗色模式">◑</button>
+        <button class="theme-btn" id="tbtn-system" onclick="setTheme('system')" title="跟随系统">⊙</button>
+      </div>
+      <div class="clock" id="clock"></div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-label">Models</div>
+      <div id="model-list-sidebar">
+        <div class="empty-msg" style="padding:20px 16px;font-size:11px;">未连接</div>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- Summary Row -->
+      <div class="summary-row">
+        <div class="summary-card" id="sc-tps">
+          <div class="sc-label">Tokens / sec</div>
+          <div class="sc-value accent" id="val-tps">—</div>
+          <div class="sc-unit" id="unit-tps">推理吞吐</div>
+          <canvas class="mini-spark" id="spark-tps"></canvas>
+        </div>
+        <div class="summary-card" id="sc-ttft">
+          <div class="sc-label">TTFT</div>
+          <div class="sc-value green" id="val-ttft">—</div>
+          <div class="sc-unit">首字延迟 (ms)</div>
+          <canvas class="mini-spark" id="spark-ttft"></canvas>
+        </div>
+        <div class="summary-card" id="sc-gen">
+          <div class="sc-label">Gen Time</div>
+          <div class="sc-value amber" id="val-gen">—</div>
+          <div class="sc-unit">生成耗时 (s)</div>
+          <canvas class="mini-spark" id="spark-gen"></canvas>
+        </div>
+        <div class="summary-card">
+          <div class="sc-label">Tokens Used</div>
+          <div class="sc-value" id="val-tok">—</div>
+          <div class="sc-unit" id="unit-tok">prompt / completion</div>
+        </div>
+        <div class="summary-card">
+          <div class="sc-label">Requests</div>
+          <div class="sc-value" id="val-req">0</div>
+          <div class="sc-unit" id="unit-req">已监测</div>
+        </div>
+      </div>
+
+      <!-- Detail -->
+      <div class="detail-panel">
+
+        <!-- Chart: TPS history -->
+        <div class="chart-panel">
+          <div class="panel-header">
+            <div class="panel-title">Tokens / Second</div>
+            <div class="panel-current"><span id="cur-tps-big">—</span> <span>tok/s</span></div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chart-tps" class="chart-canvas"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart: TTFT history -->
+        <div class="chart-panel">
+          <div class="panel-header">
+            <div class="panel-title">Time to First Token</div>
+            <div class="panel-current"><span id="cur-ttft-big">—</span> <span>ms</span></div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chart-ttft" class="chart-canvas"></canvas>
+          </div>
+        </div>
+
+        <!-- Model info grid -->
+        <div class="info-grid" id="info-grid">
+          <div class="no-data" style="grid-column:span 2">
+            <div class="no-data-icon">◈</div>
+            <div>连接后选择模型查看详情</div>
+          </div>
+        </div>
+
+        <!-- Request history table -->
+        <div class="history-panel">
+          <div class="history-header">
+            <div class="panel-title">Request History</div>
+            <div style="font-family:monospace;font-size:11px;color:var(--text-muted)" id="hist-count">0 records</div>
+          </div>
+          <div class="history-table-wrap">
+            <div id="hist-inner">
+              <div class="empty-msg">暂无请求历史</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ── State ──
+let models = [];
+let selectedModel = null;
+let history = [];     // { time, tps, ttft, gen, prompt, completion, total, stopReason }
+let timer = null;
+let reqCount = 0;
+const MAX_HIST = 60;
+
+// ── Theme ──
+let currentTheme = localStorage.getItem('lms-theme') || 'dark';
+let sysMq = window.matchMedia('(prefers-color-scheme: dark)');
+
+function applyTheme() {
+  const root = document.documentElement;
+  if (currentTheme === 'system') {
+    root.setAttribute('data-theme', sysMq.matches ? 'dark' : 'light');
+  } else {
+    root.setAttribute('data-theme', currentTheme);
+  }
+  ['light','dark','system'].forEach(t => {
+    const btn = document.getElementById('tbtn-' + t);
+    if (btn) btn.classList.toggle('active', t === currentTheme);
+  });
+}
+
+function applyChartTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const tpsColor  = isDark ? '#0ea5e9' : '#0284c7';
+  const ttftColor = isDark ? '#22c55e' : '#16a34a';
+  chartTps.data.datasets[0].borderColor = tpsColor;
+  chartTps.data.datasets[0].backgroundColor = hexFill(tpsColor);
+  chartTps.update('none');
+  chartTtft.data.datasets[0].borderColor = ttftColor;
+  chartTtft.data.datasets[0].backgroundColor = hexFill(ttftColor);
+  chartTtft.update('none');
+}
+
+function setTheme(t) {
+  currentTheme = t;
+  localStorage.setItem('lms-theme', t);
+  applyTheme();
+  applyChartTheme();
+}
+
+sysMq.addEventListener('change', () => { if (currentTheme === 'system') { applyTheme(); applyChartTheme(); } });
+applyTheme();
+
+// ── Clock ──
+function tick() {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('zh-CN', {hour12:false});
+}
+tick(); setInterval(tick, 1000);
+
+// ── Charts ──
+const chartOpts = (color) => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  animation: false,
+  plugins: { legend: { display: false }, tooltip: { enabled: false } },
+  scales: {
+    x: { display: false },
+    y: {
+      display: true,
+      position: 'right',
+      grid: { color: 'rgba(30,37,53,0.6)', drawBorder: false },
+      ticks: {
+        color: '#334155',
+        font: { family: 'JetBrains Mono', size: 9 },
+        maxTicksLimit: 4,
+        padding: 4
+      },
+      border: { display: false }
+    }
+  },
+  elements: {
+    line: { tension: 0.4, borderWidth: 1.5, borderColor: color, fill: true },
+    point: { radius: 0 }
+  }
+});
+
+function makeDataset(color) {
+  return {
+    data: Array(MAX_HIST).fill(null),
+    borderColor: color,
+    backgroundColor: color.replace(')', ', 0.07)').replace('rgb', 'rgba').replace('#', 'rgba(').replace(/^rgba\(([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2}), 0.07\)$/, (m,r,g,b)=>`rgba(${parseInt(r,16)},${parseInt(g,16)},${parseInt(b,16)},0.07)`),
+    fill: true
+  };
+}
+
+// simpler fill
+function hexFill(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},0.07)`;
+}
+
+const labels = Array(MAX_HIST).fill('');
+
+const chartTps = new Chart(document.getElementById('chart-tps'), {
+  type: 'line',
+  data: { labels, datasets: [{ data: Array(MAX_HIST).fill(null), borderColor: '#0ea5e9', backgroundColor: hexFill('#0ea5e9'), fill: true }] },
+  options: chartOpts('#0ea5e9')
+});
+
+const chartTtft = new Chart(document.getElementById('chart-ttft'), {
+  type: 'line',
+  data: { labels, datasets: [{ data: Array(MAX_HIST).fill(null), borderColor: '#22c55e', backgroundColor: hexFill('#22c55e'), fill: true }] },
+  options: chartOpts('#22c55e')
+});
+
+// 图表创建完成后同步当前主题颜色
+applyChartTheme();
+
+// Sparkline helper
+function drawSpark(id, data, color) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth, H = canvas.offsetHeight;
+  canvas.width = W; canvas.height = H;
+  ctx.clearRect(0,0,W,H);
+  const valid = data.filter(v => v !== null && !isNaN(v));
+  if (valid.length < 2) return;
+  const mn = Math.min(...valid), mx = Math.max(...valid);
+  const range = mx - mn || 1;
+  const pts = valid.map((v,i) => [i/(valid.length-1)*W, H - ((v-mn)/range)*(H-2)-1]);
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  pts.forEach(([x,y]) => ctx.lineTo(x,y));
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+// ── Connection ──
+function getBase() {
+  return `http://${document.getElementById('ip').value.trim() || 'localhost'}:${document.getElementById('port').value.trim() || '1234'}`;
+}
+
+function setLed(state) {
+  const led = document.getElementById('led');
+  const txt = document.getElementById('status-txt');
+  led.className = 'status-led ' + state;
+  txt.textContent = { online:'ONLINE', offline:'OFFLINE', connecting:'...' }[state] || state.toUpperCase();
+}
+
+async function connect() {
+  setLed('connecting');
+  try {
+    const res = await fetch(`${getBase()}/api/v0/models`, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    models = data.data || [];
+    setLed('online');
+    renderSidebar();
+    if (models.length > 0) selectModel(models[0]);
+    pushHistory(null);
+  } catch(e) {
+    setLed('offline');
+    models = [];
+    renderSidebar();
+  }
+}
+
+// ── Sidebar ──
+function renderSidebar() {
+  const el = document.getElementById('model-list-sidebar');
+  if (!models.length) {
+    el.innerHTML = '<div class="empty-msg" style="padding:20px 16px;font-size:11px;">无模型</div>';
+    return;
+  }
+  const loaded = models.filter(m => m.state === 'loaded');
+  const unloaded = models.filter(m => m.state !== 'loaded');
+  let html = '';
+  if (loaded.length) {
+    html += '<div class="sidebar-label" style="color:#334155;margin-top:4px">已加载</div>';
+    loaded.forEach(m => html += modelItem(m));
+    if (unloaded.length) html += '<div class="sidebar-divider"></div><div class="sidebar-label" style="color:#1e2535">未加载</div>';
+  }
+  unloaded.forEach(m => html += modelItem(m));
+  el.innerHTML = html;
+}
+
+function modelItem(m) {
+  const active = selectedModel && selectedModel.id === m.id ? ' active' : '';
+  const stateClass = m.state === 'loaded' ? 'loaded' : 'unloaded';
+  const short = m.id.length > 22 ? m.id.slice(0,20)+'…' : m.id;
+  return `<div class="model-item${active}" onclick="selectModel(${JSON.stringify(m).replace(/"/g,'&quot;')})">
+    <div class="model-item-name">${short}</div>
+    <div class="model-item-meta">
+      <div class="model-state-dot ${stateClass}"></div>
+      <span>${m.type || 'llm'}</span>
+      ${m.quantization ? `<span>· ${m.quantization}</span>` : ''}
+    </div>
+  </div>`;
+}
+
+function selectModel(m) {
+  selectedModel = m;
+  renderSidebar();
+  renderInfoGrid(m);
+}
+
+// ── Info Grid ──
+function renderInfoGrid(m) {
+  const ctx = m.max_context_length ? `${(m.max_context_length/1000).toFixed(0)}k` : '—';
+  const state = m.state === 'loaded';
+  document.getElementById('info-grid').innerHTML = `
+    <div class="info-row">
+      <div class="info-key">Model ID</div>
+      <div class="info-val accent" title="${m.id}">${m.id}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-key">State</div>
+      <div class="info-val ${state ? 'green':'amber'}">${state ? 'LOADED' : 'NOT LOADED'}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-key">Architecture</div>
+      <div class="info-val">${m.arch || '—'}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-key">Quantization</div>
+      <div class="info-val purple">${m.quantization || '—'}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-key">Format</div>
+      <div class="info-val">${m.compatibility_type || '—'}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-key">Context</div>
+      <div class="info-val accent">${ctx}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-key">Publisher</div>
+      <div class="info-val">${m.publisher || '—'}</div>
+    </div>
+    <div class="info-row">
+      <div class="info-key">Type</div>
+      <div class="info-val">${m.type || '—'}</div>
+    </div>
+  `;
+}
+
+// ── History & Charts ──
+function pushHistory(rec) {
+  // rec可为null (纯刷新)，或 {tps, ttft, gen, prompt, completion, total, stopReason, model}
+  if (rec) {
+    history.unshift(rec);
+    if (history.length > 200) history.pop();
+    reqCount++;
+    document.getElementById('val-req').textContent = reqCount;
+
+    // Update summary
+    document.getElementById('val-tps').textContent = rec.tps.toFixed(1);
+    document.getElementById('val-ttft').textContent = Math.round(rec.ttft * 1000);
+    document.getElementById('val-gen').textContent = rec.gen.toFixed(2);
+    document.getElementById('val-tok').textContent = `${rec.prompt} / ${rec.completion}`;
+
+    // Update charts
+    const tpsData = chartTps.data.datasets[0].data;
+    tpsData.push(rec.tps); if (tpsData.length > MAX_HIST) tpsData.shift();
+    chartTps.update('none');
+
+    const ttftData = chartTtft.data.datasets[0].data;
+    ttftData.push(Math.round(rec.ttft * 1000)); if (ttftData.length > MAX_HIST) ttftData.shift();
+    chartTtft.update('none');
+
+    document.getElementById('cur-tps-big').textContent = rec.tps.toFixed(1);
+    document.getElementById('cur-ttft-big').textContent = Math.round(rec.ttft * 1000);
+
+    // Sparklines
+    drawSpark('spark-tps', tpsData, '#0ea5e9');
+    drawSpark('spark-ttft', ttftData, '#22c55e');
+    drawSpark('spark-gen', chartTtft.data.datasets[0].data, '#f59e0b');
+  }
+  renderHistTable();
+}
+
+function renderHistTable() {
+  const inner = document.getElementById('hist-inner');
+  document.getElementById('hist-count').textContent = `${history.length} records`;
+  if (!history.length) {
+    inner.innerHTML = '<div class="empty-msg">暂无请求历史<br><span style="color:#1e2535;font-size:10px">向服务器发送请求后数据将自动采集</span></div>';
+    return;
+  }
+  inner.innerHTML = `<table class="htable">
+    <thead><tr>
+      <th>时间</th><th>模型</th>
+      <th>Tok/s</th><th>TTFT (ms)</th><th>Gen (s)</th>
+      <th>Prompt</th><th>Completion</th><th>Total</th><th>Stop</th>
+    </tr></thead>
+    <tbody>${history.map(r => `<tr>
+      <td>${r.time}</td>
+      <td class="val" title="${r.model}">${r.model.split('/').pop().slice(0,20)}</td>
+      <td class="accent">${r.tps.toFixed(1)}</td>
+      <td class="green">${Math.round(r.ttft*1000)}</td>
+      <td class="amber">${r.gen.toFixed(3)}</td>
+      <td>${r.prompt}</td>
+      <td>${r.completion}</td>
+      <td class="purple">${r.total}</td>
+      <td style="color:var(--text-muted)">${r.stopReason || '—'}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+// ── Probe: send a minimal request to selected loaded model and capture stats ──
+async function probe() {
+  const loaded = models.filter(m => m.state === 'loaded');
+  if (!loaded.length) return;
+  const m = selectedModel && selectedModel.state === 'loaded' ? selectedModel : loaded[0];
+  try {
+    const res = await fetch(`${getBase()}/api/v0/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(30000),
+      body: JSON.stringify({
+        model: m.id,
+        messages: [{ role: 'user', content: 'Hi' }],
+        max_tokens: 8,
+        stream: false,
+        temperature: 0.1
+      })
+    });
+    if (!res.ok) return;
+    const d = await res.json();
+    if (!d.stats) return;
+    pushHistory({
+      time: new Date().toLocaleTimeString('zh-CN',{hour12:false}),
+      model: d.model || m.id,
+      tps: d.stats.tokens_per_second || 0,
+      ttft: d.stats.time_to_first_token || 0,
+      gen: d.stats.generation_time || 0,
+      prompt: d.usage?.prompt_tokens || 0,
+      completion: d.usage?.completion_tokens || 0,
+      total: d.usage?.total_tokens || 0,
+      stopReason: d.stats.stop_reason || '—'
+    });
+    // refresh model list
+    const mres = await fetch(`${getBase()}/api/v0/models`, { signal: AbortSignal.timeout(4000) });
+    if (mres.ok) { const md = await mres.json(); models = md.data || []; renderSidebar(); }
+  } catch(e) {}
+}
+
+// ── Refresh (models only, no probe) ──
+async function refreshModels() {
+  try {
+    const res = await fetch(`${getBase()}/api/v0/models`, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) { setLed('offline'); return; }
+    const data = await res.json();
+    models = data.data || [];
+    setLed('online');
+    renderSidebar();
+  } catch(e) { setLed('offline'); }
+}
+
+// ── Auto ──
+function toggleAuto() {
+  clearInterval(timer);
+  if (document.getElementById('auto').checked) {
+    const ms = parseInt(document.getElementById('interval').value);
+    timer = setInterval(async () => { await refreshModels(); }, ms);
+  }
+}
+document.getElementById('interval').addEventListener('change', toggleAuto);
+
+// ── Import external stats (paste JSON) ──
+// Allow user to manually paste a completion response to record stats
+window.addEventListener('paste', async (e) => {
+  const text = e.clipboardData.getData('text');
+  if (!text.trim().startsWith('{')) return;
+  try {
+    const d = JSON.parse(text);
+    if (d.stats && d.stats.tokens_per_second !== undefined) {
+      pushHistory({
+        time: new Date().toLocaleTimeString('zh-CN',{hour12:false}),
+        model: d.model || 'pasted',
+        tps: d.stats.tokens_per_second || 0,
+        ttft: d.stats.time_to_first_token || 0,
+        gen: d.stats.generation_time || 0,
+        prompt: d.usage?.prompt_tokens || 0,
+        completion: d.usage?.completion_tokens || 0,
+        total: d.usage?.total_tokens || 0,
+        stopReason: d.stats.stop_reason || '—'
+      });
+      alert('已从剪贴板导入统计数据');
+    }
+  } catch(e) {}
+});
+</script>
+</body>
+</html>
