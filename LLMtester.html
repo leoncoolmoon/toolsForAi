@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM Benchmark - 增强管理版</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f4; color: #1c1917; padding: 2rem; min-height: 100vh; }
+.app { max-width: 950px; margin: 0 auto; }
+h1 { font-size: 20px; font-weight: 700; color: #111; letter-spacing: -0.02em; margin-bottom: 4px; }
+.sub { font-size: 13px; color: #78716c; margin-bottom: 2rem; }
+.section { margin-bottom: 1.4rem; }
+.label { font-size: 10px; font-weight: 700; color: #a8a29e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 7px; display: flex; align-items: center; gap: 6px; }
+.label-badge { font-size: 9px; background: #e7e5e4; color: #78716c; border-radius: 3px; padding: 1px 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.row { display: flex; gap: 8px; align-items: center; }
+input[type=text], textarea, select {
+  background: #fff; border: 1px solid #d6d3d1; color: #1c1917;
+  border-radius: 6px; padding: 8px 12px; font-family: inherit; font-size: 13px;
+  outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+}
+input[type=text]:focus, textarea:focus, select:focus { border-color: #a78bfa; box-shadow: 0 0 0 3px #ede9fe; }
+input[type=text], select { height: 36px; }
+.url-input { flex: 1; font-family: 'SF Mono', monospace; font-size: 12px; }
+textarea { width: 100%; min-height: 140px; resize: vertical; line-height: 1.6; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
+select { cursor: pointer; }
+button {
+  background: #fff; border: 1px solid #d6d3d1; color: #44403c;
+  border-radius: 6px; padding: 0 14px; height: 36px; font-family: inherit;
+  font-size: 13px; cursor: pointer; transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+button:hover { background: #f5f5f4; border-color: #a8a29e; }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+.start-btn {
+  background: #1c1917; color: #fafaf9; border-color: #1c1917;
+  font-weight: 600; padding: 0 22px; height: 38px;
+}
+.start-btn:hover { background: #292524; border-color: #292524; }
+.start-btn:disabled { background: #d6d3d1; color: #a8a29e; border-color: #d6d3d1; }
+.stop-btn {
+  background: #ef4444; color: white; border-color: #ef4444;
+}
+.stop-btn:hover { background: #dc2626; border-color: #dc2626; }
+
+/* Server config card */
+.server-card { background: #fff; border: 1px solid #e7e5e4; border-radius: 10px; padding: 14px 16px; margin-bottom: 1.4rem; }
+.server-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+.server-row:last-child { margin-bottom: 0; }
+.server-type-select { width: 180px; }
+.api-key-input { flex: 1; }
+.hint { font-size: 11px; color: #a8a29e; margin-top: 5px; line-height: 1.5; }
+.hint code { font-family: 'SF Mono', monospace; background: #f5f5f4; padding: 1px 4px; border-radius: 3px; font-size: 10px; }
+.error-msg { font-size: 12px; color: #dc2626; margin-top: 6px; }
+.models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px; }
+.model-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+  border: 1px solid #e7e5e4; border-radius: 6px; cursor: pointer; background: #fff;
+  transition: border-color 0.15s, background 0.15s; user-select: none;
+}
+.model-item:hover { border-color: #c4b5fd; background: #faf5ff; }
+.model-item.selected { border-color: #7c3aed; background: #f5f3ff; }
+.model-item input[type=checkbox] { accent-color: #7c3aed; width: 13px; height: 13px; flex-shrink: 0; cursor: pointer; }
+.model-name { font-size: 12px; color: #44403c; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'SF Mono', monospace; }
+.empty-msg { font-size: 13px; color: #a8a29e; text-align: center; padding: 1.5rem 0; }
+
+/* Actions */
+.actions-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.status-bar { font-size: 12px; color: #78716c; display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: #d6d3d1; flex-shrink: 0; }
+.dot.running { background: #22c55e; animation: pulse 1s ease-in-out infinite; }
+.dot.done { background: #22c55e; }
+.dot.error { background: #ef4444; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.progress-bar-wrap { height: 3px; background: #e7e5e4; border-radius: 2px; overflow: hidden; margin-top: 8px; }
+.progress-bar { height: 100%; background: #7c3aed; border-radius: 2px; transition: width 0.3s; }
+
+/* Results */
+.results { margin-top: 1.5rem; }
+.toolbar-row { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; justify-content: space-between; align-items: center; }
+.toolbar-left { display: flex; gap: 6px; }
+.toolbar-right { display: flex; gap: 6px; }
+.toolbar-row button { font-size: 11px; height: 26px; padding: 0 10px; color: #78716c; }
+.model-result { border: 1px solid #e7e5e4; border-radius: 10px; margin-bottom: 10px; background: #fff; overflow: hidden; }
+.model-result-header {
+  padding: 11px 14px; background: #fafaf9;
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; user-select: none; transition: background 0.15s;
+}
+.model-result-header:hover { background: #f5f5f4; }
+.model-result.open .model-result-header { border-bottom: 1px solid #e7e5e4; }
+.header-left { display: flex; align-items: center; gap: 8px; }
+.arrow { font-size: 9px; color: #a8a29e; transition: transform 0.2s; display: inline-block; }
+.model-result:not(.open) .arrow { transform: rotate(-90deg); }
+.result-model-name { font-size: 13px; font-weight: 600; color: #1c1917; font-family: 'SF Mono', monospace; }
+.result-stat { font-size: 11px; color: #a8a29e; display: flex; align-items: center; gap: 10px; }
+.delete-queue-btn {
+  font-size: 11px; background: none; border: 1px solid #e7e5e4; border-radius: 12px;
+  padding: 2px 8px; height: 22px; color: #a8a29e; margin-left: 8px; cursor: pointer;
+}
+.delete-queue-btn:hover { background: #fee2e2; border-color: #fecaca; color: #dc2626; }
+.model-result.canceled { opacity: 0.6; background: #fef2f2; }
+.model-result.canceled .model-result-header { background: #fef2f2; }
+.model-result-body { display: none; }
+.model-result.open .model-result-body { display: block; }
+.qa-item { padding: 12px 14px; border-bottom: 1px solid #f5f5f4; }
+.qa-item:last-child { border-bottom: none; }
+.q-label { font-size: 10px; font-weight: 700; color: #a8a29e; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3px; }
+.q-text { font-size: 13px; color: #44403c; margin-bottom: 10px; line-height: 1.5; }
+.a-label { font-size: 10px; font-weight: 700; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+.a-line { font-size: 13px; color: #1c1917; line-height: 1.75; white-space: pre-wrap; word-break: break-word; }
+.a-line.pending { color: #a8a29e; font-style: italic; }
+.time-tag { font-size: 11px; color: #c4b5fd; margin-top: 6px; }
+.ctx-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ctx-option {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  border: 1px solid #e7e5e4; border-radius: 8px; cursor: pointer; background: #fff;
+  transition: border-color 0.15s, background 0.15s; user-select: none; flex-shrink: 0;
+}
+.ctx-option:hover { border-color: #c4b5fd; background: #faf5ff; }
+.ctx-option input[type=radio] { display: none; }
+.ctx-option:has(input:checked) { border-color: #7c3aed; background: #f5f3ff; }
+.ctx-icon { font-size: 16px; color: #a8a29e; line-height: 1; }
+.ctx-option:has(input:checked) .ctx-icon { color: #7c3aed; }
+.ctx-title { font-size: 12px; font-weight: 600; color: #1c1917; line-height: 1.3; }
+.ctx-option:has(input:checked) .ctx-title { color: #6d28d9; }
+.ctx-desc { font-size: 11px; color: #a8a29e; line-height: 1.3; }
+.ctx-window-size { font-size: 12px; color: #78716c; display: flex; align-items: center; gap: 6px; padding: 4px 0; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>LLM Benchmark</h1>
+  <p class="sub">支持 Ollama、LM Studio、llama.cpp、OpenAI 及各类兼容服务 · 动态管理待测队列</p>
+
+  <!-- Server Config -->
+  <div class="server-card">
+    <div class="server-row">
+      <select id="serverType" class="server-type-select">
+        <optgroup label="本地服务">
+          <option value="ollama">Ollama</option>
+          <option value="lmstudio" selected>LM Studio</option>
+          <option value="llamacpp">llama.cpp</option>
+          <option value="jan">Jan</option>
+          <option value="lmstudio_legacy">LM Studio (旧版 &lt;0.2.17)</option>
+        </optgroup>
+        <optgroup label="在线服务">
+          <option value="openai">OpenAI</option>
+          <option value="groq">Groq</option>
+          <option value="together">Together AI</option>
+          <option value="openrouter">OpenRouter</option>
+          <option value="deepseek">DeepSeek</option>
+          <option value="anthropic_compat">Anthropic (via proxy)</option>
+        </optgroup>
+        <optgroup label="自定义">
+          <option value="custom">自定义 OpenAI 兼容端点</option>
+        </optgroup>
+      </select>
+      <input class="url-input" id="serverUrl" type="text" value="http://localhost:1234" />
+      <button id="fetchBtn">获取模型 →</button>
+    </div>
+    <div class="server-row" id="apiKeyRow" style="display:none;">
+      <span style="font-size:12px;color:#78716c;white-space:nowrap;">API Key</span>
+      <input class="api-key-input" id="apiKey" type="password" placeholder="sk-..." />
+    </div>
+    <div class="hint" id="serverHint"></div>
+    <div id="fetchError" class="error-msg" style="display:none;"></div>
+  </div>
+
+  <div class="section">
+    <div class="label">可用模型 <span id="modelCount" style="font-style:italic;font-weight:400;opacity:0.7;"></span></div>
+    <div id="modelsGrid" class="models-grid">
+      <div class="empty-msg">请先点击「获取模型」</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="label">考题列表 <span class="label-badge">每行一题</span></div>
+    <textarea id="questions" placeholder="请输入测试题目，每行一道&#10;例如：&#10;解释一下什么是量子纠缠&#10;用 Python 写一个二分查找函数&#10;地球距离太阳多远？"></textarea>
+  </div>
+
+  <div class="section">
+    <div class="label">上下文模式</div>
+    <div class="ctx-bar">
+      <label class="ctx-option">
+        <input type="radio" name="ctxMode" value="none" />
+        <div class="ctx-icon">⊘</div>
+        <div><div class="ctx-title">无上下文</div><div class="ctx-desc">每题独立，互不影响</div></div>
+      </label>
+      <label class="ctx-option">
+        <input type="radio" name="ctxMode" value="window" checked />
+        <div class="ctx-icon">◫</div>
+        <div><div class="ctx-title">滑动窗口</div><div class="ctx-desc">保留最近 N 轮对话</div></div>
+      </label>
+      <label class="ctx-option">
+        <input type="radio" name="ctxMode" value="full" />
+        <div class="ctx-icon">≡</div>
+        <div><div class="ctx-title">完整上下文</div><div class="ctx-desc">保留全部历史（慎用）</div></div>
+      </label>
+      <div class="ctx-window-size" id="ctxWindowSizeWrap">
+        保留最近 <input type="number" id="ctxWindowSize" value="3" min="1" max="20" style="width:48px;height:28px;padding:4px 6px;text-align:center;font-family:inherit;" /> 轮
+      </div>
+    </div>
+    <div class="hint" id="ctxHint"></div>
+  </div>
+
+  <div class="section">
+    <div class="actions-row">
+      <button class="start-btn" id="startBtn" disabled>开始测试</button>
+      <button id="stopTestBtn" style="display:none;" class="stop-btn">⏹️ 停止测试</button>
+      <button id="addToQueueBtn" style="display:none;">➕ 加入测试列表</button>
+      <button id="dlBtn" style="display:none;">下载结果 ↓</button>
+    </div>
+    <div class="status-bar" id="statusBar" style="display:none;">
+      <div class="dot" id="statusDot"></div>
+      <span id="statusText"></span>
+    </div>
+    <div class="progress-bar-wrap" id="progressWrap" style="display:none;">
+      <div class="progress-bar" id="progressBar" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div id="resultsArea" class="results"></div>
+</div>
+
+<script>
+// ================= 原有配置 (保持不变) ===================
+const SERVERS = { /* 原有全部配置，省略重复内容保持简洁，实际继承原逻辑 */ 
+  ollama: { label: 'Ollama', defaultUrl: 'http://localhost:11434', needsKey: false, hint: '本地服务 · 默认端口 <code>11434</code>', modelsPath: '/api/tags', modelsExtract: d => (d.models || []).map(m => m.name || m.model).filter(Boolean), completionPath: '/api/chat', buildBody: (model, messages, stream) => ({ model, messages, stream }), parseChunk: chunk => { try { const o = JSON.parse(chunk); return o.message?.content || ''; } catch { return ''; } }, isDone: chunk => { try { return JSON.parse(chunk).done === true; } catch { return false; } }, streamFormat: 'ndjson' },
+  lmstudio: { label: 'LM Studio', defaultUrl: 'http://localhost:1234', needsKey: false, hint: '本地服务，默认端口1234', modelsPath: '/v1/models', modelsExtract: d => (d.data || []).map(m => m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, temperature: 0.7, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
+  llamacpp: { label: 'llama.cpp', defaultUrl: 'http://localhost:8080', needsKey: false, hint: '本地服务', modelsPath: '/v1/models', modelsExtract: d => (d.data || []).map(m => m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, temperature: 0.7, max_predict: 2048 }), parseChunk: null, streamFormat: 'sse' },
+  jan: { label: 'Jan', defaultUrl: 'http://localhost:1337', needsKey: false, hint: '本地服务', modelsPath: '/v1/models', modelsExtract: d => (d.data || []).map(m => m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, temperature: 0.7, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
+  lmstudio_legacy: { label: 'LM Studio (旧版)', defaultUrl: 'http://localhost:1234', needsKey: false, hint: '旧版api', modelsPath: '/v1/models', modelsExtract: d => (Array.isArray(d) ? d.map(m => m.id || m) : (d.data || []).map(m => m.id)).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, temperature: 0.7, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
+  openai: { label: 'OpenAI', defaultUrl: 'https://api.openai.com', needsKey: true, hint: '在线服务', modelsPath: '/v1/models', modelsExtract: d => (d.data || []).map(m => m.id).filter(m => m.startsWith('gpt')), completionPath: '/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
+  groq: { label: 'Groq', defaultUrl: 'https://api.groq.com', needsKey: true, hint: '在线服务', modelsPath: '/openai/v1/models', modelsExtract: d => (d.data || []).map(m => m.id), completionPath: '/openai/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
+  together: { label: 'Together AI', defaultUrl: 'https://api.together.xyz', needsKey: true, hint: '在线服务', modelsPath: '/v1/models', modelsExtract: d => (d.data || []).map(m => m.id), completionPath: '/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
+  openrouter: { label: 'OpenRouter', defaultUrl: 'https://openrouter.ai', needsKey: true, hint: '在线服务', modelsPath: '/api/v1/models', modelsExtract: d => (d.data || []).map(m => m.id), completionPath: '/api/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
+  deepseek: { label: 'DeepSeek', defaultUrl: 'https://api.deepseek.com', needsKey: true, hint: '在线服务', modelsPath: '/v1/models', modelsExtract: d => (d.data || []).map(m => m.id), completionPath: '/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
+  anthropic_compat: { label: 'Anthropic (via proxy)', defaultUrl: 'https://your-proxy.example.com', needsKey: true, hint: '代理', modelsPath: '/v1/models', modelsExtract: d => (d.data || []).map(m => m.id), completionPath: '/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
+  custom: { label: '自定义', defaultUrl: 'http://localhost:8000', needsKey: false, hint: '自定义端点', modelsPath: '/v1/models', modelsExtract: d => (d.data || []).map(m => m.id), completionPath: '/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
+};
+
+function getCtxMode() { return document.querySelector('input[name=ctxMode]:checked')?.value || 'window'; }
+function getCtxWindow() { return Math.max(1, parseInt(document.getElementById('ctxWindowSize').value) || 3); }
+function buildMessages(history, mode, windowSize) { if (mode === 'none') return [history[history.length-1]]; if (mode === 'window') { const keep = windowSize * 2 + 1; return history.slice(-keep); } return [...history]; }
+
+let models = [];
+let selectedModels = new Set();
+let results = {};
+let isTesting = false;
+let testAbortFlag = false;        // 停止标志
+let currentTestLoopPromise = null; // 用于中途停止
+let pendingQueueModels = [];       // 动态待测模型列表 (已排序)
+let processedModelsSet = new Set(); // 已完成或正在测试的模型，避免重复添加
+let activeModelIndex = 0;          // 当前正在执行第几个模型
+
+// DOM 元素
+const serverTypeEl = document.getElementById('serverType');
+const serverUrlEl = document.getElementById('serverUrl');
+const apiKeyRowEl = document.getElementById('apiKeyRow');
+const serverHintEl = document.getElementById('serverHint');
+const fetchBtn = document.getElementById('fetchBtn');
+const startBtn = document.getElementById('startBtn');
+const stopTestBtn = document.getElementById('stopTestBtn');
+const addToQueueBtn = document.getElementById('addToQueueBtn');
+const dlBtn = document.getElementById('dlBtn');
+const resultsArea = document.getElementById('resultsArea');
+
+function applyServerProfile(type) {
+  const p = SERVERS[type];
+  if(p) { serverUrlEl.value = p.defaultUrl; apiKeyRowEl.style.display = p.needsKey ? 'flex' : 'none'; serverHintEl.innerHTML = p.hint; }
+}
+serverTypeEl.addEventListener('change', () => applyServerProfile(serverTypeEl.value));
+applyServerProfile(serverTypeEl.value);
+
+function getHeaders() { const key = document.getElementById('apiKey').value.trim(); const h = { 'Content-Type': 'application/json' }; if(key) h['Authorization'] = `Bearer ${key}`; return h; }
+
+async function fetchModels() {
+  const type = serverTypeEl.value, profile = SERVERS[type], base = serverUrlEl.value.trim().replace(/\/$/, '');
+  const errEl = document.getElementById('fetchError'); errEl.style.display = 'none';
+  fetchBtn.disabled = true; fetchBtn.textContent = '获取中...';
+  try {
+    const res = await fetch(`${base}${profile.modelsPath}`, { headers: getHeaders() });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    models = profile.modelsExtract(data);
+    if(!models.length) throw new Error('无可用模型');
+    renderModels();
+    document.getElementById('modelCount').textContent = `(${models.length} 个)`;
+  } catch(e) { errEl.textContent = `连接失败: ${e.message}`; errEl.style.display = 'block'; }
+  finally { fetchBtn.disabled = false; fetchBtn.textContent = '获取模型 →'; }
+}
+
+function renderModels() {
+  const grid = document.getElementById('modelsGrid');
+  grid.innerHTML = '';
+  models.forEach(m => {
+    const label = document.createElement('label'); label.className = 'model-item' + (selectedModels.has(m) ? ' selected' : '');
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = selectedModels.has(m);
+    const span = document.createElement('span'); span.className = 'model-name'; span.textContent = m;
+    label.appendChild(cb); label.appendChild(span);
+    cb.onchange = () => { if(cb.checked) selectedModels.add(m); else selectedModels.delete(m); label.className = 'model-item' + (selectedModels.has(m) ? ' selected' : ''); updateStartBtn(); };
+    label.onclick = (e) => { if(e.target !== cb) { e.preventDefault(); cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); } };
+    grid.appendChild(label);
+  });
+  updateStartBtn();
+}
+
+function updateStartBtn() {
+  const qs = document.getElementById('questions').value.trim().split('\n').filter(l=>l.trim());
+  startBtn.disabled = !selectedModels.size || !qs.length || isTesting;
+}
+
+document.getElementById('questions').addEventListener('input', updateStartBtn);
+
+// ---------- 核心增强: 队列管理 & 停止测试 ----------
+async function* readSSE(reader) { const dec = new TextDecoder(); let buf=''; while(true) { const {done,value}=await reader.read(); if(done)break; buf+=dec.decode(value,{stream:true}); const lines=buf.split('\n'); buf=lines.pop(); for(const line of lines){ const t=line.trim(); if(!t||t==='data: [DONE]')continue; if(t.startsWith('data: ')) yield t.slice(6); } } }
+async function* readNDJSON(reader) { const dec = new TextDecoder(); let buf=''; while(true){ const {done,value}=await reader.read(); if(done)break; buf+=dec.decode(value,{stream:true}); const lines=buf.split('\n'); buf=lines.pop(); for(const line of lines) if(line.trim()) yield line.trim(); } }
+
+async function runSingleModel(model, lines, profile, base, ctxMode, ctxWindow, cardElem, keyId, statEl, modelIndex) {
+  const qaBox = cardElem.querySelector(`.model-result-body`);
+  if(!qaBox) return false;
+  const history = [];
+  let totalTime = 0;
+  for(let i=0; i<lines.length; i++) {
+    if(testAbortFlag) throw new Error('测试已停止');
+    const q = lines[i].trim();
+    document.getElementById('statusText').innerText = `[${model}] 第 ${i+1}/${lines.length} 题 (队列中剩余 ${pendingQueueModels.length - modelIndex -1} 个模型待测)`;
+    const qaDiv = document.createElement('div'); qaDiv.className = 'qa-item';
+    qaDiv.innerHTML = `<div class="q-label">问题 ${i+1}</div><div class="q-text">${escapeHtml(q)}</div><div class="a-label">回答</div><div class="a-line pending" id="ans-${keyId}-${i}">等待回答...</div><div class="time-tag" id="time-${keyId}-${i}"></div>`;
+    qaBox.appendChild(qaDiv);
+    const t0 = Date.now();
+    let answer = '';
+    const ansEl = document.getElementById(`ans-${keyId}-${i}`);
+    history.push({ role: 'user', content: q });
+    const msgSlice = buildMessages(history, ctxMode, ctxWindow);
+    const body = profile.buildBody(model, msgSlice, true);
+    const resp = await fetch(`${base}${profile.completionPath}`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(body) });
+    if(!resp.ok) { const txt = await resp.text(); throw new Error(`HTTP ${resp.status}: ${txt.slice(0,100)}`); }
+    ansEl.className = 'a-line'; ansEl.textContent = '';
+    const reader = resp.body.getReader();
+    if(profile.streamFormat === 'ndjson') {
+      for await (const chunk of readNDJSON(reader)) {
+        if(testAbortFlag) break;
+        if(profile.isDone && profile.isDone(chunk)) break;
+        const delta = profile.parseChunk(chunk);
+        if(delta) { answer += delta; ansEl.textContent = answer; }
+      }
+    } else {
+      for await (const chunk of readSSE(reader)) {
+        if(testAbortFlag) break;
+        try { const obj = JSON.parse(chunk); const delta = obj.choices?.[0]?.delta?.content; if(delta) { answer += delta; ansEl.textContent = answer; } } catch(e) {}
+      }
+    }
+    history.push({ role: 'assistant', content: answer });
+    const elapsed = ((Date.now() - t0)/1000).toFixed(2);
+    document.getElementById(`time-${keyId}-${i}`).innerText = `耗时 ${elapsed}s`;
+    totalTime += parseFloat(elapsed);
+    results[model].questions.push(q); results[model].answers.push(answer); results[model].times.push(elapsed);
+  }
+  statEl.innerText = `${lines.length} 题 · 总耗时 ${totalTime.toFixed(1)}s`;
+  return true;
+}
+
+async function startTest() {
+  if(isTesting) return;
+  const type = serverTypeEl.value, profile = SERVERS[type], base = serverUrlEl.value.trim().replace(/\/$/, '');
+  const lines = document.getElementById('questions').value.trim().split('\n').filter(l=>l.trim());
+  if(!lines.length) return;
+  const ctxMode = getCtxMode(), ctxWindow = getCtxWindow();
+  // 收集初始选中的模型
+  let initialSelected = [...selectedModels];
+  if(initialSelected.length === 0) return;
+  pendingQueueModels = [...initialSelected];
+  processedModelsSet.clear();
+  results = {};
+  testAbortFlag = false;
+  isTesting = true;
+  
+  // UI 显示停止按钮、加入队列按钮等
+  stopTestBtn.style.display = 'inline-block';
+  addToQueueBtn.style.display = 'inline-block';
+  startBtn.disabled = true;
+  dlBtn.style.display = 'none';
+  document.getElementById('statusBar').style.display = 'flex';
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('statusDot').className = 'dot running';
+  
+  resultsArea.innerHTML = '';
+  const toolbar = document.createElement('div'); toolbar.className = 'toolbar-row';
+  toolbar.innerHTML = `<div class="toolbar-left"><button id="expandAllBtn">全部展开</button><button id="collapseAllBtn">全部折叠</button></div><div class="toolbar-right"><span style="font-size:11px;color:#78716c;">✖ 删除未开始模型</span></div>`;
+  resultsArea.appendChild(toolbar);
+  document.getElementById('expandAllBtn')?.addEventListener('click',()=>setAllOpen(true));
+  document.getElementById('collapseAllBtn')?.addEventListener('click',()=>setAllOpen(false));
+  
+  // 预创建所有卡片（队列模型）
+  const cardMap = new Map();
+  for(let idx=0; idx<pendingQueueModels.length; idx++) {
+    const model = pendingQueueModels[idx];
+    results[model] = { questions: [], answers: [], times: [] };
+    const key = safeDomId(model);
+    const card = document.createElement('div'); card.className = 'model-result' + (idx===0?' open':'');
+    card.setAttribute('data-model', model);
+    card.innerHTML = `
+      <div class="model-result-header">
+        <div class="header-left"><span class="arrow">&#9660;</span><span class="result-model-name">${escapeHtml(model)}</span></div>
+        <div class="result-stat"><span id="stat-${key}">排队中...</span><button class="delete-queue-btn" data-model="${escapeHtml(model)}">✖ 移除</button></div>
+      </div>
+      <div class="model-result-body" id="qa-${key}"></div>`;
+    card.querySelector('.model-result-header').addEventListener('click',()=>card.classList.toggle('open'));
+    resultsArea.appendChild(card);
+    cardMap.set(model, card);
+  }
+  
+  let completedCount = 0;
+  const totalModels = pendingQueueModels.length;
+  for(let idx=0; idx<pendingQueueModels.length && !testAbortFlag; idx++) {
+    activeModelIndex = idx;
+    const model = pendingQueueModels[idx];
+    if(processedModelsSet.has(model)) continue;
+    processedModelsSet.add(model);
+    const card = cardMap.get(model);
+    if(!card) continue;
+    const key = safeDomId(model);
+    const statSpan = card.querySelector(`#stat-${key}`);
+    if(statSpan) statSpan.innerText = '测试中...';
+    // 删除按钮暂时不可用防止误删
+    const delBtn = card.querySelector('.delete-queue-btn');
+    if(delBtn) delBtn.disabled = true;
+    try {
+      await runSingleModel(model, lines, profile, base, ctxMode, ctxWindow, card, key, statSpan, idx);
+    } catch(err) {
+      if(testAbortFlag) { statSpan.innerText = '已停止'; card.classList.add('canceled'); }
+      else { statSpan.innerText = `错误: ${err.message.slice(0,40)}`; }
+    }
+    completedCount++;
+    const progressPercent = (completedCount / totalModels) * 100;
+    document.getElementById('progressBar').style.width = `${progressPercent}%`;
+    if(delBtn) delBtn.disabled = false;
+  }
+  isTesting = false;
+  stopTestBtn.style.display = 'none';
+  addToQueueBtn.style.display = 'none';
+  document.getElementById('statusDot').className = 'dot done';
+  document.getElementById('statusText').innerText = testAbortFlag ? '测试已停止' : `测试完成 — ${processedModelsSet.size} 个模型 · ${lines.length} 道题`;
+  startBtn.disabled = false;
+  if(!testAbortFlag) dlBtn.style.display = 'inline-block';
+  else dlBtn.style.display = 'none';
+  testAbortFlag = false;
+}
+
+function stopTest() {
+  if(isTesting) {
+    testAbortFlag = true;
+    document.getElementById('statusText').innerText = '正在停止...';
+  }
+}
+
+// 加入测试列表: 将当前选中的模型添加到待测队列（未开始或正在测试时都可以动态添加）
+function addToQueue() {
+  if(!isTesting) return;
+  const newModels = [...selectedModels].filter(m => !processedModelsSet.has(m) && !pendingQueueModels.includes(m));
+  if(newModels.length === 0) { alert('所选模型已在队列中或已完成测试'); return; }
+  for(const m of newModels) {
+    pendingQueueModels.push(m);
+    results[m] = { questions: [], answers: [], times: [] };
+    const key = safeDomId(m);
+    const card = document.createElement('div'); card.className = 'model-result';
+    card.setAttribute('data-model', m);
+    card.innerHTML = `
+      <div class="model-result-header">
+        <div class="header-left"><span class="arrow">&#9660;</span><span class="result-model-name">${escapeHtml(m)}</span></div>
+        <div class="result-stat"><span id="stat-${key}">排队中...</span><button class="delete-queue-btn" data-model="${escapeHtml(m)}">✖ 移除</button></div>
+      </div>
+      <div class="model-result-body" id="qa-${key}"></div>`;
+    card.querySelector('.model-result-header').addEventListener('click',()=>card.classList.toggle('open'));
+    resultsArea.appendChild(card);
+  }
+  // 更新全局计数组件
+  const totalNew = pendingQueueModels.length;
+  document.getElementById('progressBar').style.maxWidth = '100%';
+}
+
+// 删除排队中的模型 (未开始的)
+function removePendingModel(modelName) {
+  if(!isTesting) return;
+  const idx = pendingQueueModels.indexOf(modelName);
+  if(idx !== -1 && idx > activeModelIndex) {  // 仅允许删除尚未开始或排队中的
+    pendingQueueModels.splice(idx, 1);
+    const card = document.querySelector(`.model-result[data-model="${CSS.escape(modelName)}"]`);
+    if(card) card.remove();
+    delete results[modelName];
+  } else {
+    alert('该模型已经开始测试或已完成，无法删除');
+  }
+}
+
+// 事件委托处理删除按钮
+resultsArea.addEventListener('click', (e) => {
+  const btn = e.target.closest('.delete-queue-btn');
+  if(btn && isTesting) {
+    e.stopPropagation();
+    const model = btn.getAttribute('data-model');
+    if(model) removePendingModel(model);
+  }
+});
+
+function setAllOpen(open) { document.querySelectorAll('.model-result').forEach(c => { if(open) c.classList.add('open'); else c.classList.remove('open'); }); }
+function safeDomId(s) { return btoa(encodeURIComponent(s)).replace(/[^a-zA-Z0-9]/g,''); }
+function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function downloadResults() {
+  const type = serverTypeEl.value, profile = SERVERS[type];
+  const out = [`LLM 测试报告`, `时间: ${new Date().toLocaleString()}`, `服务: ${profile.label}`, `地址: ${serverUrlEl.value}`];
+  out.push(`模型: ${Object.keys(results).join(', ')}`, '='.repeat(60));
+  for (const [model, data] of Object.entries(results)) {
+    out.push(`\n=== 模型: ${model} ===`);
+    for(let i=0; i<data.questions.length; i++) {
+      out.push(`【题目 ${i+1}】${data.questions[i]}`, `【回答】(${data.times[i]}s)\n${data.answers[i]}`, '-'.repeat(40));
+    }
+  }
+  const blob = new Blob([out.join('\n')], {type:'text/plain'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `bench-${Date.now()}.txt`; a.click(); URL.revokeObjectURL(a.href);
+}
+
+fetchBtn.addEventListener('click', fetchModels);
+startBtn.addEventListener('click', startTest);
+stopTestBtn.addEventListener('click', stopTest);
+addToQueueBtn.addEventListener('click', addToQueue);
+dlBtn.addEventListener('click', downloadResults);
+updateStartBtn();
+function updateCtxHint() { const mode=getCtxMode(); const hint=document.getElementById('ctxHint'); const wrap=document.getElementById('ctxWindowSizeWrap'); if(mode==='window'){const n=getCtxWindow(); hint.innerText=`每道题携带前 ${n} 轮问答`; wrap.style.display='flex';} else { wrap.style.display='none'; if(mode==='none')hint.innerText='每题独立'; else hint.innerText='完整上下文'; } }
+document.querySelectorAll('input[name=ctxMode]').forEach(r=>r.addEventListener('change',updateCtxHint));
+document.getElementById('ctxWindowSize').addEventListener('input',updateCtxHint);
+updateCtxHint();
+</script>
+</body>
+</html>
