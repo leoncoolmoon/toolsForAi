@@ -117,6 +117,11 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   padding: 2px 8px; height: 22px; color: #a8a29e; margin-left: 8px; cursor: pointer;
 }
 .delete-queue-btn:hover { background: #fee2e2; border-color: #fecaca; color: #dc2626; }
+.skip-model-btn {
+  font-size: 11px; background: none; border: 1px solid #fde68a; border-radius: 12px;
+  padding: 2px 8px; height: 22px; color: #92400e; margin-left: 4px; cursor: pointer; display: none;
+}
+.skip-model-btn:hover { background: #fef3c7; border-color: #f59e0b; color: #78350f; }
 .model-result.canceled { opacity: 0.6; background: #fef2f2; }
 .model-result.canceled .model-result-header { background: #fef2f2; }
 .model-result-body { display: none; }
@@ -128,6 +133,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 .a-label { font-size: 10px; font-weight: 700; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
 .a-line { font-size: 13px; color: #1c1917; line-height: 1.75; white-space: pre-wrap; word-break: break-word; }
 .a-line.pending { color: #a8a29e; font-style: italic; }
+.a-line.error { color: #dc2626; font-style: italic; background: #fef2f2; border-left: 3px solid #fca5a5; padding-left: 8px; border-radius: 0 4px 4px 0; }
 .time-tag { font-size: 11px; color: #c4b5fd; margin-top: 6px; }
 .ctx-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .ctx-option {
@@ -269,6 +275,8 @@ let selectedModels = new Set();
 let results = {};
 let isTesting = false;
 let testAbortFlag = false;        // 停止标志
+let currentAbortController = null; // 用于立即中止当前 fetch
+let skipModelFlag = false;         // 跳过当前模型，继续下一个
 let currentTestLoopPromise = null; // 用于中途停止
 let pendingQueueModels = [];       // 动态待测模型列表 (已排序)
 let processedModelsSet = new Set(); // 已完成或正在测试的模型，避免重复添加
@@ -344,6 +352,7 @@ async function runSingleModel(model, lines, profile, base, ctxMode, ctxWindow, c
   let totalTime = 0;
   for(let i=0; i<lines.length; i++) {
     if(testAbortFlag) throw new Error('测试已停止');
+    if(skipModelFlag) throw new DOMException('跳过模型', 'AbortError');
     const q = lines[i].trim();
     document.getElementById('statusText').innerText = `[${model}] 第 ${i+1}/${lines.length} 题 (队列中剩余 ${pendingQueueModels.length - modelIndex -1} 个模型待测)`;
     const qaDiv = document.createElement('div'); qaDiv.className = 'qa-item';
@@ -352,33 +361,49 @@ async function runSingleModel(model, lines, profile, base, ctxMode, ctxWindow, c
     const t0 = Date.now();
     let answer = '';
     const ansEl = document.getElementById(`ans-${keyId}-${i}`);
-    history.push({ role: 'user', content: q });
-    const msgSlice = buildMessages(history, ctxMode, ctxWindow);
-    const body = profile.buildBody(model, msgSlice, true);
-    const resp = await fetch(`${base}${profile.completionPath}`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(body) });
-    if(!resp.ok) { const txt = await resp.text(); throw new Error(`HTTP ${resp.status}: ${txt.slice(0,100)}`); }
-    ansEl.className = 'a-line'; ansEl.textContent = '';
-    const reader = resp.body.getReader();
-    if(profile.streamFormat === 'ndjson') {
-      for await (const chunk of readNDJSON(reader)) {
-        if(testAbortFlag) break;
-        if(profile.isDone && profile.isDone(chunk)) break;
-        const delta = profile.parseChunk(chunk);
-        if(delta) { answer += delta; ansEl.textContent = answer; }
+    try {
+      history.push({ role: 'user', content: q });
+      const msgSlice = buildMessages(history, ctxMode, ctxWindow);
+      const body = profile.buildBody(model, msgSlice, true);
+      currentAbortController = new AbortController();
+      const resp = await fetch(`${base}${profile.completionPath}`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(body), signal: currentAbortController.signal });
+      if(!resp.ok) { const txt = await resp.text(); throw new Error(`HTTP ${resp.status}: ${txt.slice(0,100)}`); }
+      ansEl.className = 'a-line'; ansEl.textContent = '';
+      const reader = resp.body.getReader();
+      if(profile.streamFormat === 'ndjson') {
+        for await (const chunk of readNDJSON(reader)) {
+          if(testAbortFlag) break;
+          if(profile.isDone && profile.isDone(chunk)) break;
+          const delta = profile.parseChunk(chunk);
+          if(delta) { answer += delta; ansEl.textContent = answer; }
+        }
+      } else {
+        for await (const chunk of readSSE(reader)) {
+          if(testAbortFlag) break;
+          try { const obj = JSON.parse(chunk); const delta = obj.choices?.[0]?.delta?.content; if(delta) { answer += delta; ansEl.textContent = answer; } } catch(e) {}
+        }
       }
-    } else {
-      for await (const chunk of readSSE(reader)) {
-        if(testAbortFlag) break;
-        try { const obj = JSON.parse(chunk); const delta = obj.choices?.[0]?.delta?.content; if(delta) { answer += delta; ansEl.textContent = answer; } } catch(e) {}
-      }
+      const elapsed = ((Date.now() - t0)/1000).toFixed(2);
+      document.getElementById(`time-${keyId}-${i}`).innerText = `耗时 ${elapsed}s`;
+      totalTime += parseFloat(elapsed);
+      results[model].questions.push(q); results[model].answers.push(answer); results[model].times.push(elapsed);
+      history.push({ role: 'assistant', content: answer });
+    } catch(qErr) {
+      // 停止/跳过信号：向上抛出，不在这里处理
+      if(testAbortFlag || qErr.name === 'AbortError') throw qErr;
+      // 单题报错：标记该题失败，继续下一题
+      const elapsed = ((Date.now() - t0)/1000).toFixed(2);
+      ansEl.className = 'a-line error';
+      ansEl.textContent = `⚠️ 出错: ${qErr.message}`;
+      document.getElementById(`time-${keyId}-${i}`).innerText = `耗时 ${elapsed}s`;
+      results[model].questions.push(q); results[model].answers.push(`[错误] ${qErr.message}`); results[model].times.push(elapsed);
+      // 上下文中移除失败的这轮，避免污染后续问题
+      if(history[history.length-1]?.role === 'user') history.pop();
     }
-    history.push({ role: 'assistant', content: answer });
-    const elapsed = ((Date.now() - t0)/1000).toFixed(2);
-    document.getElementById(`time-${keyId}-${i}`).innerText = `耗时 ${elapsed}s`;
-    totalTime += parseFloat(elapsed);
-    results[model].questions.push(q); results[model].answers.push(answer); results[model].times.push(elapsed);
   }
-  statEl.innerText = `${lines.length} 题 · 总耗时 ${totalTime.toFixed(1)}s`;
+  const errCount = results[model].answers.filter(a => a.startsWith('[错误]')).length;
+  const errNote = errCount > 0 ? ` · ⚠️ ${errCount} 题出错` : '';
+  statEl.innerText = `${lines.length} 题 · 总耗时 ${totalTime.toFixed(1)}s${errNote}`;
   return true;
 }
 
@@ -424,7 +449,7 @@ async function startTest() {
     card.innerHTML = `
       <div class="model-result-header">
         <div class="header-left"><span class="arrow">&#9660;</span><span class="result-model-name">${escapeHtml(model)}</span></div>
-        <div class="result-stat"><span id="stat-${key}">排队中...</span><button class="delete-queue-btn" data-model="${escapeHtml(model)}">✖ 移除</button></div>
+        <div class="result-stat"><span id="stat-${key}">排队中...</span><button class="skip-model-btn" id="skip-${key}" data-model="${escapeHtml(model)}">⏭ 跳过</button><button class="delete-queue-btn" data-model="${escapeHtml(model)}">✖ 移除</button></div>
       </div>
       <div class="model-result-body" id="qa-${key}"></div>`;
     card.querySelector('.model-result-header').addEventListener('click',()=>card.classList.toggle('open'));
@@ -447,12 +472,19 @@ async function startTest() {
     // 删除按钮暂时不可用防止误删
     const delBtn = card.querySelector('.delete-queue-btn');
     if(delBtn) delBtn.disabled = true;
+    // 显示跳过按钮
+    skipModelFlag = false;
+    const skipBtn = card.querySelector(`#skip-${key}`);
+    if(skipBtn) skipBtn.style.display = 'inline-block';
     try {
       await runSingleModel(model, lines, profile, base, ctxMode, ctxWindow, card, key, statSpan, idx);
     } catch(err) {
-      if(testAbortFlag) { statSpan.innerText = '已停止'; card.classList.add('canceled'); }
+      if(testAbortFlag || (err.name === 'AbortError' && !skipModelFlag)) { statSpan.innerText = '已停止'; card.classList.add('canceled'); testAbortFlag = true; }
+      else if(err.name === 'AbortError' && skipModelFlag) { statSpan.innerText = `已跳过 (${results[model]?.questions?.length || 0} 题)`; card.classList.add('canceled'); }
       else { statSpan.innerText = `错误: ${err.message.slice(0,40)}`; }
     }
+    if(skipBtn) skipBtn.style.display = 'none';
+    skipModelFlag = false;
     completedCount++;
     const progressPercent = (completedCount / totalModels) * 100;
     document.getElementById('progressBar').style.width = `${progressPercent}%`;
@@ -472,6 +504,7 @@ async function startTest() {
 function stopTest() {
   if(isTesting) {
     testAbortFlag = true;
+    if(currentAbortController) currentAbortController.abort();
     document.getElementById('statusText').innerText = '正在停止...';
   }
 }
@@ -490,7 +523,7 @@ function addToQueue() {
     card.innerHTML = `
       <div class="model-result-header">
         <div class="header-left"><span class="arrow">&#9660;</span><span class="result-model-name">${escapeHtml(m)}</span></div>
-        <div class="result-stat"><span id="stat-${key}">排队中...</span><button class="delete-queue-btn" data-model="${escapeHtml(m)}">✖ 移除</button></div>
+        <div class="result-stat"><span id="stat-${key}">排队中...</span><button class="skip-model-btn" id="skip-${key}" data-model="${escapeHtml(m)}">⏭ 跳过</button><button class="delete-queue-btn" data-model="${escapeHtml(m)}">✖ 移除</button></div>
       </div>
       <div class="model-result-body" id="qa-${key}"></div>`;
     card.querySelector('.model-result-header').addEventListener('click',()=>card.classList.toggle('open'));
@@ -515,8 +548,16 @@ function removePendingModel(modelName) {
   }
 }
 
-// 事件委托处理删除按钮
+// 事件委托处理删除/跳过按钮
 resultsArea.addEventListener('click', (e) => {
+  // 跳过当前模型
+  const skipBtn = e.target.closest('.skip-model-btn');
+  if(skipBtn && isTesting) {
+    e.stopPropagation();
+    skipModelFlag = true;
+    if(currentAbortController) currentAbortController.abort();
+    return;
+  }
   const btn = e.target.closest('.delete-queue-btn');
   if(btn && isTesting) {
     e.stopPropagation();
