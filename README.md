@@ -1,4 +1,4 @@
-## 1. LM Studio Performance Monitor
+## 1. LITELLM Performance Monitor
 
 一个仿 Windows Task Manager Performance 风格的 LM Studio 远程工作状态监控面板，单文件 HTML，无需安装，打开即用。
 
@@ -21,12 +21,12 @@
 
 ### 快速开始
 
-1. 下载 `lmstudio-performance.html`
+1. 下载 `litellm-performance.html`
 2. 用任意浏览器打开（直接双击即可）
-3. 在顶栏输入 LM Studio 所在机器的 IP 地址和端口（默认 `localhost:1234`）
+3. 在顶栏输入服务所在机器的 IP 地址，端口和api key（默认 `localhost:4000`）
 4. 点击「连接」
 
-> **本地使用**：直接 `localhost:1234` 即可，无需额外配置。
+> **本地使用**：直接 `localhost:4000` 输入api key 即可，无需额外配置。
 
 ---
 
@@ -158,14 +158,6 @@
 
 ---
 
-### 文件结构
-
-```
-lmstudio-performance.html   # 全部功能，单文件，无外部依赖（CDN 加载 Chart.js 和字体）
-README.md                   # 本文档
-```
-
----
 
 ## License
 
@@ -183,7 +175,7 @@ MIT — 自由使用、修改和分发。
 ### 📋 功能特性
 
 #### 核心功能
-- **多服务支持**：支持 Ollama、LM Studio、llama.cpp、Jan 等本地服务，以及 OpenAI、Groq、Together AI、OpenRouter、DeepSeek 等在线服务
+- **多服务支持**：支持 Ollama、LM Studio、llama.cpp、 litellm、Jan 等本地服务，以及 OpenAI、Groq、Together AI、OpenRouter、DeepSeek 等在线服务
 - **自定义端点**：支持任何 OpenAI 兼容的自定义端点
 - **批量模型测试**：同时测试多个模型，对比性能和质量
 - **上下文模式**：
