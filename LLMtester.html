@@ -84,6 +84,9 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* Actions */
 .actions-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.delay-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; font-size: 13px; color: #44403c; }
+.delay-label { display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
+.delay-input { width: 60px; text-align: center; font-size: 13px; border: 1px solid #e7e5e4; border-radius: 6px; padding: 3px 6px; }
 .status-bar { font-size: 12px; color: #78716c; display: flex; align-items: center; gap: 8px; margin-top: 10px; }
 .dot { width: 6px; height: 6px; border-radius: 50%; background: #d6d3d1; flex-shrink: 0; }
 .dot.running { background: #22c55e; animation: pulse 1s ease-in-out infinite; }
@@ -186,7 +189,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
     </div>
     <div class="server-row" id="apiKeyRow" style="display:none;">
       <span style="font-size:12px;color:#78716c;white-space:nowrap;">API Key</span>
-      <input class="api-key-input" id="apiKey" type="password" placeholder="sk-..." />
+      <input class="api-key-input" id="apiKey" placeholder="sk-..." />
     </div>
     <div class="hint" id="serverHint"></div>
     <div id="fetchError" class="error-msg" style="display:none;"></div>
@@ -235,6 +238,13 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
       <button id="stopTestBtn" style="display:none;" class="stop-btn">⏹️ 停止测试</button>
       <button id="addToQueueBtn" style="display:none;">➕ 加入测试列表</button>
       <button id="dlBtn" style="display:none;">下载结果 ↓</button>
+    </div>
+    <div class="delay-row">
+      <label class="delay-label">
+        <input type="checkbox" id="delayEnabled" checked> 模型间延时
+      </label>
+      <input type="number" id="delaySeconds" value="60" min="0" max="3600" class="delay-input"> 秒
+      <span class="hint" style="margin:0;">· 每个模型测试完成后等待，避免请求过于密集</span>
     </div>
     <div class="status-bar" id="statusBar" style="display:none;">
       <div class="dot" id="statusDot"></div>
@@ -489,6 +499,17 @@ async function startTest() {
     const progressPercent = (completedCount / totalModels) * 100;
     document.getElementById('progressBar').style.width = `${progressPercent}%`;
     if(delBtn) delBtn.disabled = false;
+
+    // 模型间延时（最后一个模型不等待）
+    const isLast = idx >= pendingQueueModels.length - 1;
+    const delayEnabled = document.getElementById('delayEnabled').checked;
+    const delaySec = parseInt(document.getElementById('delaySeconds').value) || 0;
+    if(!testAbortFlag && !isLast && delayEnabled && delaySec > 0) {
+      for(let remaining = delaySec; remaining > 0 && !testAbortFlag; remaining--) {
+        document.getElementById('statusText').innerText = `等待下一个模型... ${remaining}s（点击停止可跳过）`;
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
   }
   isTesting = false;
   stopTestBtn.style.display = 'none';
