@@ -202,7 +202,7 @@ MIT — 自由使用、修改和分发。
 1. **打开工具**
    ```bash
    # 直接在浏览器中打开 HTML 文件
-   open llm-benchmark.html
+   open LLMtester.html
    ```
 
 2. **配置服务**
