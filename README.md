@@ -1,373 +1,175 @@
-## 1. LITELLM Performance Monitor
+# LLM 测试工具集 · 双引擎评测工作台
 
-一个仿 Windows Task Manager Performance 风格的 LM Studio 远程工作状态监控面板，单文件 HTML，无需安装，打开即用。
+> 一套强大的本地 Web 工具集，专为 LLM 网关监控与模型批量评测设计。  
+> 无需复杂后端，开箱即用，支持 OpenAI 兼容接口、LiteLLM、Ollama、LM Studio 等主流推理引擎。
 
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![WebApp](https://img.shields.io/badge/stack-HTML%2FCSS%2FJS-important)]()
 ![Version](https://img.shields.io/badge/version-1.0-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
 ---
 
-### 功能特性
+## 📦 项目概览
 
-- **实时连接** — 输入目标机器 IP 和端口，一键连接 LM Studio REST API
-- **性能图表** — Tokens/sec 与 TTFT 历史折线，滚动记录最近 60 次数据
-- **迷你火花图** — 顶部摘要卡片内置趋势迷你图
-- **模型侧边栏** — 左侧列出所有模型，已加载/未加载分组，点击查看详情
-- **请求历史表** — 记录每次请求的完整统计数据，支持最多 200 条
-- **自动刷新** — 可选 3s / 5s / 10s 间隔自动轮询模型列表
-- **主题切换** — 支持浅色、暗色、跟随系统三种模式，偏好持久化
-- **JSON 粘贴导入** — 将 LM Studio 返回的完整 JSON 粘贴到页面，自动提取统计数据
+本项目包含两个核心页面，形成完整的 LLM 工程闭环：
 
----
+| 工具 | 文件名 | 核心职责 |
+|------|--------|-----------|
+| **LiteLLM 观测站** | `litellm-performance.html` | 实时监控 LiteLLM 网关指标（请求速率、并发、Token 消耗、模型用量），并提供交互式测试能力。 |
+| **LLM 批量测试台** | `LLMtester.html` | 支持多模型对比测试，灵活管理测试队列，自定义上下文策略，流式输出评测结果。 |
 
-### 快速开始
-
-1. 下载 `litellm-performance.html`
-2. 用任意浏览器打开（直接双击即可）
-3. 在顶栏输入服务所在机器的 IP 地址，端口和api key（默认 `localhost:4000`）
-4. 点击「连接」
-
-> **本地使用**：直接 `localhost:4000` 输入api key 即可，无需额外配置。
+> 📁 目录结构建议  
+> ```
+> /your-project-folder/
+>   ├── index.html                  (本项目导航首页)
+>   ├── litellm-performance.html    (观测站)
+>   ├── LLMtester.html              (批量评测)
+>   └── README.md
+> ```
 
 ---
 
-### 界面说明
+## 🚀 快速开始
 
-#### LMS Monitor 仪表板
+### 1️⃣ 环境要求
+- 现代浏览器（Chrome / Edge / Firefox，支持 ES2020）
+- 本地或远程可访问的 LLM API 服务（例如 LiteLLM、Ollama、LM Studio、OpenAI 等）
 
-| 控件区域 | 状态指示 |
-| :--- | :--- |
-| ● LMS Monitor  `[IP]:[Port]` [连接] | ◉ ONLINE   AUTO ▼   ☀◑⊙ 时钟 |
+### 2️⃣ 启动方式
+直接将项目文件夹放置于任意 Web 服务下（或双击 `index.html` 使用 `file://` 协议，但部分跨域限制需注意——推荐使用本地静态服务器）。
 
-##### 性能指标
-
-| 模型侧边栏 | 实时指标 | 延迟指标 |
-| :--- | :--- | :--- |
-| **模型** | Tok/s | TTFT |
-| **侧边栏** | Gen Time | Tokens |
-| **Requests** | | |
-| **已加载** | **Tokens/s 折线图** | **TTFT 折线图** |
-| **未加载** | **模型详细信息** (架构/量化/格式…) | **请求历史表格** (时间/TPS/TTFT/Gen/Tokens…) |
-
-#### 顶部摘要卡片
-
-| 指标 | 说明 |
-|------|------|
-| **Tokens / sec** | 推理吞吐量，越高越好 |
-| **TTFT** | 首字延迟（Time to First Token），单位 ms，越低越好 |
-| **Gen Time** | 总生成耗时，单位秒 |
-| **Tokens Used** | 本次请求的 prompt / completion token 数 |
-| **Requests** | 本次会话已采集的请求总数 |
-
-#### 性能图表
-
-左上 — **Tokens/sec 历史**，蓝色折线，对应 CPU 使用率曲线。  
-右上 — **TTFT 历史**，绿色折线，反映响应延迟变化趋势。
-
-#### 模型信息格
-
-选中左侧模型后展示：
-
-- Model ID、State（已加载 / 未加载）
-- Architecture（架构）、Quantization（量化）
-- Format（格式）、Context（最大上下文）
-- Publisher（发布者）、Type（类型）
-
----
-
-### 主题切换
-
-顶栏右侧三个按钮：
-
-| 按钮 | 模式 |
-|------|------|
-| ☀ | 浅色模式（白底深字） |
-| ◑ | 暗色模式（黑底亮字，默认） |
-| ⊙ | 跟随系统（自动响应系统深色/浅色设置） |
-
-主题偏好会保存在 `localStorage`，下次打开自动恢复。
-
----
-
-### 数据来源说明
-
-面板从以下 LM Studio API 端点获取数据：
-
-| 端点 | 用途 |
-|------|------|
-| `GET /api/v0/models` | 获取模型列表与状态 |
-| `POST /api/v0/chat/completions` | 发送探测请求，采集 stats |
-
-响应中的增强统计字段：
-
-```json
-{
-  "stats": {
-    "tokens_per_second": 51.4,
-    "time_to_first_token": 0.111,
-    "generation_time": 0.954,
-    "stop_reason": "eosFound"
-  },
-  "usage": {
-    "prompt_tokens": 24,
-    "completion_tokens": 53,
-    "total_tokens": 77
-  },
-  "model_info": {
-    "arch": "llama",
-    "quant": "Q4_K_M",
-    "format": "gguf",
-    "context_length": 4096
-  },
-  "runtime": {
-    "name": "llama.cpp-win-x86_64-nvidia-cuda-avx2",
-    "version": "1.26.0"
-  }
-}
+#### 使用 Python 快速启动（推荐）
+```bash
+# 进入项目目录
+cd llm-toolkit
+python3 -m http.server 8080
+# 浏览器打开 http://localhost:8080
 ```
 
----
+#### 使用 VS Code Live Server 或任意 HTTP Server 均可
 
-### JSON 粘贴导入
-
-如果因 CORS 限制无法直接连接远程机器，可以手动导入数据：
-
-1. 在 LM Studio 或其他客户端向 `/api/v0/chat/completions` 发送请求
-2. 复制完整的 JSON 响应
-3. 在面板页面按 `Ctrl+V` 粘贴
-4. 面板自动提取 stats 并更新图表和历史记录
+### 3️⃣ 配置与连接
+- **LiteLLM 观测站**：在页面顶部输入 LiteLLM 地址（默认 `http://localhost:4000`）及可选 Master Key，点击「连接」即可。
+- **LLM 批量测试台**：选择服务器类型（Ollama / LM Studio / llama.cpp / OpenAI 等），填写 API 地址与密钥，点击「获取模型」加载待测模型列表。
 
 ---
 
-### CORS 注意事项
+## 🧭 工具详解
 
-浏览器的同源策略可能阻止跨域请求。解决方法：
+### 🔎 LiteLLM 观测站 (`litellm-performance.html`)
 
-**方法一（推荐）**：在 LM Studio 的 `Developer → Server Settings` 中开启 **Allow CORS**。
+> 专业级 LiteLLM 网关可观测性面板，基于 Prometheus 指标动态渲染
 
-**方法二**：将 HTML 文件放在与 LM Studio 同一台机器上，用 `localhost` 访问。
+**特性**
+- **实时指标卡片**：展示 In-Flight 并发、总请求数、失败数、总 Token、错误率等关键信息。
+- **双走势图**：并发请求历史曲线 + 请求速率增量图。
+- **模型用量表格**：按模型聚合请求量、失败次数、Input/Output Token、Token 占比进度条。
+- **主动测试抽屉 (Test & Measure)**：选择模型、自定义 Prompt、实时计算 TTFT (Time To First Token)、生成吞吐 (tok/s) 和耗时详情，流式输出答案。
+- **自动轮询**：可配置轮询间隔（3s / 5s / 10s / 30s），日志面板记录每次轮询状态。
+- **明暗主题**：支持 light / dark / system 跟随。
 
-**方法三**：使用 JSON 粘贴导入功能（见上文），完全绕过跨域限制。
+**适用场景**：  
+- 监控 LiteLLM 生产网关的健康度  
+- 分析不同模型的 Token 成本与请求失败率  
+- 快速试探模型响应速度（TTFT / tok/s）
+
+> 💡 要求 LiteLLM 启动时启用 `/metrics` 端点（默认 Prometheus 已开启），并开放 `/health/backlog` 以获取并发数。
 
 ---
 
-### 系统要求
+### 🧪 LLM 批量测试台 (`LLMtester.html`)
 
-- LM Studio `0.3.x` 及以上（需开启本地 API Server）
-- 任意现代浏览器（Chrome / Edge / Firefox / Safari）
-- 无需 Node.js、Python 或任何其他依赖
+> 支持多后端、动态队列、上下文记忆的模型基准测试工具
+
+**核心亮点**
+- **多服务支持**：内置 Ollama / LM Studio / llama.cpp / Jan / LiteLLM / OpenAI / Groq / Together / DeepSeek / OpenRouter 等配置模板。
+- **灵活模型选择**：从 API 自动拉取模型列表，多选加入待测队列。
+- **考题自定义**：文本域每行一道题，支持任意数量问题。
+- **三种上下文模式**：
+  - 无上下文：每题独立
+  - 滑动窗口：保留最近 N 轮对话（默认 3 轮）
+  - 完整上下文（谨慎用于长对话）
+- **动态测试队列**：测试过程中可「加入测试列表」增加新模型，也可跳过当前模型或删除排队中的模型，无需重新开始。
+- **模型间延时**：可配置延时（默认 60 秒），避免请求过密。
+- **结果查看与导出**：每个模型折叠/展开详情，显示每道题的回答、耗时，支持一键下载 TXT 报告。
+
+**适用场景**：  
+- 对比本地多个模型的回答质量与响应速度  
+- 测试模型在多轮对话下的上下文记忆能力  
+- 批量回归评测，验证模型更新后的效果
 
 ---
 
+## 🛠️ 常见配置示例
 
-## License
+### LiteLLM 观测站连接参数
+| 字段 | 示例值 | 说明 |
+|------|--------|------|
+| IP / Host | `localhost` 或 `127.0.0.1` | LiteLLM 服务地址 |
+| Port | `4000` | 默认端口，可自定义 |
+| Master Key | `sk-xxxx` | 若 LiteLLM 设置了代理密钥则填写，否则留空 |
 
-MIT — 自由使用、修改和分发。
+### LLM 批量测试台配置示例
 
+| 后端 | 默认地址 | 是否需要 API Key | 模型路径 |
+|------|----------|----------------|----------|
+| LM Studio | `http://localhost:1234` | ❌ | `/v1/models` |
+| Ollama | `http://localhost:11434` | ❌ | `/api/tags` |
+| llama.cpp | `http://localhost:8080` | ❌ | `/v1/models` |
+| OpenAI | `https://api.openai.com` | ✅ | `/v1/models` |
+| DeepSeek | `https://api.deepseek.com` | ✅ | `/v1/models` |
 
+---
 
-## 2.LLM Benchmark 工具
+## 📸 界面预览
 
-一个强大的大语言模型性能测试工具，支持多种本地和在线服务，提供灵活的测试队列管理功能。
+> 由于纯 Markdown 无法展示动态图像，建议直接运行项目体验。
 
-![Version](https://img.shields.io/badge/version-2.0-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
+- **观测站**：顶部仪表板 → 多卡片指标 → 模型排行表格 → 右侧测试面板。
+- **批量测试台**：服务器配置卡 → 模型网格 → 题库区域 → 上下文控件 → 实时结果卡片。
 
-### 📋 功能特性
+---
 
-#### 核心功能
-- **多服务支持**：支持 Ollama、LM Studio、llama.cpp、 litellm、Jan 等本地服务，以及 OpenAI、Groq、Together AI、OpenRouter、DeepSeek 等在线服务
-- **自定义端点**：支持任何 OpenAI 兼容的自定义端点
-- **批量模型测试**：同时测试多个模型，对比性能和质量
-- **上下文模式**：
-  - 无上下文：每题独立测试
-  - 滑动窗口：保留最近 N 轮对话历史
-  - 完整上下文：保留全部历史对话
+## ❓ 常见问题 (FAQ)
 
-#### 🆕 增强功能（v2.0）
-- **动态队列管理**：测试开始后可以动态添加或删除待测模型
-- **停止测试按钮**：支持随时中断测试过程
-- **智能队列操作**：
-  - 为每个排队模型提供删除按钮（仅对未开始的模型有效）
-  - 防止重复添加已测试或排队中的模型
-- **实时进度追踪**：清晰显示当前测试进度和队列状态
+### 1. LiteLLM 观测站无法获取指标？
+- 确认 LiteLLM 服务正常运行，并且 `/metrics` 端点可访问（默认 `http://localhost:4000/metrics`）。
+- 若配置了 API 密钥，请填写 Master Key。
+- 检查浏览器控制台是否有 CORS 错误（若跨域可配置 LiteLLM `--allowed_origins` 或使用代理）。
 
-### 🚀 快速开始
+### 2. 批量测试台点击「获取模型」无反应？
+- 检查服务器地址是否正确（例如 LM Studio 默认端口 1234， Ollama 默认 11434）。
+- 对于 OpenAI 类服务，确保 API Key 有效且在「API Key」行已填写。
+- 部分服务（如 llama.cpp）需启用 API 服务器模式。
 
-#### 环境要求
-- 现代浏览器（Chrome、Firefox、Edge、Safari 等）
-- 本地服务需要相应的后端服务运行
+### 3. 流式回答不显示？
+- 确保您选择的服务支持 Stream 模式 (OpenAI 兼容接口通常默认支持)。
+- 部分旧版 LM Studio (<0.2.17) 请在「服务器类型」中选择 **LM Studio (旧版 &lt;0.2.17)**。
 
-#### 使用步骤
+### 4. 能否同时测试多个模型？
+- 可以。在 LLM 批量测试台中通过复选框选择多个模型，开始测试后会自动串行执行（按选定模型顺序），并且测试过程中可动态追加新模型。
 
-1. **打开工具**
-   ```bash
-   # 直接在浏览器中打开 HTML 文件
-   open LLMtester.html
-   ```
+---
 
-2. **配置服务**
-   - 选择服务类型（Ollama、LM Studio、OpenAI 等）
-   - 填写服务地址和 API Key（如果需要）
-   - 点击「获取模型」按钮
+## 📄 许可证
 
-3. **选择模型**
-   - 从列表中勾选要测试的模型
-   - 支持多选
+本项目基于 **MIT License** 开源，可自由修改、分发及用于商业用途。请保留原始版权声明。
 
-4. **编写测试题目**
-   - 在文本框中输入测试题目，每行一道
-   - 示例：
-     ```
-     解释一下什么是量子纠缠
-     用 Python 写一个二分查找函数
-     地球距离太阳多远？
-     ```
+---
 
-5. **设置上下文模式**
-   - 选择适合的上下文模式
-   - 如选滑动窗口，可设置保留轮数
+## 🤝 贡献与反馈
 
-6. **开始测试**
-   - 点击「开始测试」按钮
-   - 测试过程中可以：
-     - 点击「停止测试」中断运行
-     - 点击「加入测试列表」添加更多模型
-     - 点击排队模型右侧的「✖ 移除」按钮删除未开始的模型
+欢迎提交 Issue 或 Pull Request 改进工具。  
+若您有更好的监控指标展示方式或评测功能建议，期待交流！
 
-7. **查看结果**
-   - 测试完成后自动生成结果面板
-   - 可以展开/折叠各个模型的详细回答
-   - 点击「下载结果」导出测试报告
+**项目维护**: 开源爱好者  
+**交流话题**: LiteLLM 监控、LLM 评测自动化、推理性能优化
 
-### 📖 服务配置说明
+---
 
-#### 本地服务
+## 🌟 致谢
 
-| 服务 | 默认地址 | 说明 |
-|------|---------|------|
-| Ollama | http://localhost:11434 | 需运行 `ollama serve` |
-| LM Studio | http://localhost:1234 | 需在 LM Studio 中启动 Local Server |
-| llama.cpp | http://localhost:8080 | 需添加 `--api` 参数启动 |
-| Jan | http://localhost:1337 | 需在 Jan 中开启 Local API Server |
+- [LiteLLM](https://github.com/BerriAI/litellm) — 统一的 LLM 网关
+- [Chart.js](https://www.chartjs.org/) — 轻量级图表渲染
+- 所有本地推理引擎开发者 (Ollama / LM Studio / llama.cpp)
 
-#### 在线服务
-
-| 服务 | 默认地址 | 需要 API Key | 常用模型示例 |
-|------|---------|-------------|-------------|
-| OpenAI | https://api.openai.com | ✅ | gpt-4o, gpt-4o-mini |
-| Groq | https://api.groq.com | ✅ | 超快推理模型 |
-| Together AI | https://api.together.xyz | ✅ | 众多开源模型 |
-| OpenRouter | https://openrouter.ai | ✅ | 几乎所有主流模型 |
-| DeepSeek | https://api.deepseek.com | ✅ | deepseek-chat |
-
-### 🔧 高级功能
-
-#### 动态队列管理
-
-测试开始后，您可以通过以下方式管理待测模型队列：
-
-1. **添加模型**：
-   - 勾选上方面板中的其他模型
-   - 点击「加入测试列表」按钮
-   - 新模型会追加到队列末尾，等待当前模型测试完成后自动开始
-
-2. **删除模型**：
-   - 在 resultsArea 中，每个排队中的模型右侧都有「✖ 移除」按钮
-   - 仅对尚未开始测试的模型有效
-   - 已经开始或完成的模型无法删除（防止数据错乱）
-
-#### 测试报告格式
-
-下载的报告包含：
-- 测试时间、服务类型、地址
-- 测试模型列表
-- 每道题的完整题目和回答
-- 每个回答的耗时统计
-- 评估建议模板（准确性、完整性、表达清晰度等评分维度）
-
-### 💡 使用建议
-
-1. **题目设计**：
-   - 建议设计 3-10 道具有代表性的题目
-   - 涵盖不同难度和类型（知识问答、代码生成、推理等）
-
-2. **上下文窗口**：
-   - 独立题目测试：选择「无上下文」
-   - 对话连贯性测试：选择「滑动窗口」，保留 3-5 轮
-   - 长对话压力测试：选择「完整上下文」（注意模型上下文限制）
-
-3. **性能优化**：
-   - 本地服务测试速度更快，适合快速迭代
-   - 在线服务需要稳定的网络连接
-   - 同时测试多个模型时，注意 API 速率限制
-
-4. **队列管理技巧**：
-   - 测试开始前勾选所有需要测试的模型
-   - 测试过程中发现需要补充对比的模型，可以随时添加
-   - 不需要等待的模型可以立即从队列中删除
-
-### 🛠️ 故障排除
-
-#### 常见问题
-
-**Q: 点击「获取模型」失败？**
-- 检查服务是否正常运行
-- 确认地址和端口号正确
-- 检查防火墙/代理设置
-
-**Q: 测试过程中报错怎么办？**
-- 查看具体错误信息
-- 检查 API Key 是否有效（在线服务）
-- 确认模型已正确加载
-
-**Q: 添加模型后没有出现在队列中？**
-- 检查该模型是否已经在队列中或已完成测试
-- 确认已勾选该模型
-- 刷新页面重试
-
-**Q: 删除按钮不可用？**
-- 只能删除排队中尚未开始的模型
-- 已经开始或已完成的模型不可删除（按钮会禁用或消失）
-
-### 📄 技术细节
-
-#### API 兼容性
-- 使用标准的 OpenAI Chat Completion API 格式
-- 支持 SSE（Server-Sent Events）和 NDJSON 流式响应
-- 自动适配不同服务的响应格式
-
-#### 数据安全
-- API Key 仅存储于浏览器内存，不会上传到任何服务器
-- 测试数据完全在本地处理
-- 下载的报告文件保存在本地
-
-### 🔮 未来计划
-
-- [ ] 支持更多上下文模式
-- [ ] 结果对比视图（图表形式）
-- [ ] 测试结果持久化存储
-- [ ] 批量导入测试题目
-- [ ] 支持自定义评分模型
-- [ ] 导出 CSV/Excel 格式报告
-
-### 📝 更新日志
-
-#### v2.0 (2026-05-01)
-- ✨ 新增动态队列管理功能
-- ✨ 新增停止测试按钮
-- ✨ 新增实时添加/删除待测模型
-- 🐛 修复上下文模式切换时的历史记录问题
-- 🎨 优化 UI 布局和交互体验
-
-#### v1.0
-- 🎉 初始版本发布
-- 基础的多模型对比测试功能
-
-### 📧 反馈与贡献
-
-如有问题或建议，欢迎提交 Issue 或 Pull Request。
-
-### 📄 许可证
-
-MIT License - 自由使用、修改和分发。
-
+> 让模型测试更透明，让性能调优更简单。
