@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>LLM 测试工具集 | 导航面板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f6f7f9 0%, #edf0f5 100%);
+            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
+            color: #1e293b;
+        }
+
+        /* 优雅容器 */
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        /* 头部区域 */
+        .hero {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .hero h1 {
+            font-size: 2.6rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1e293b, #3b4b6e);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero .sub {
+            font-size: 1rem;
+            color: #5b6e8c;
+            max-width: 560px;
+            margin: 0 auto;
+            border-bottom: 1px solid #e2e8f0;
+            display: inline-block;
+            padding-bottom: 0.5rem;
+        }
+
+        .badge-group {
+            display: flex;
+            justify-content: center;
+            gap: 0.8rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: #ffffffcc;
+            backdrop-filter: blur(2px);
+            padding: 0.2rem 0.9rem;
+            border-radius: 40px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #2c3e66;
+            border: 1px solid #cbd5e1;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+
+        /* 卡片网格 */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        /* 优雅卡片设计 */
+        .tool-card {
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(0px);
+            border-radius: 2rem;
+            box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.01);
+            transition: transform 0.2s, box-shadow 0.25s;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #ffffff70;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 24px 40px -12px rgba(0, 0, 0, 0.18);
+            background: white;
+        }
+
+        .card-header {
+            padding: 1.5rem 1.8rem 1rem 1.8rem;
+            border-bottom: 1px solid #eef2f6;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-icon {
+            font-size: 2.2rem;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
+        }
+
+        .card-header h2 {
+            font-size: 1.55rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            background: linear-gradient(120deg, #0f172a, #2d3a5e);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .card-body {
+            padding: 1.4rem 1.8rem 1.6rem 1.8rem;
+            flex: 1;
+        }
+
+        .desc {
+            color: #334155;
+            line-height: 1.55;
+            font-size: 0.95rem;
+            margin-bottom: 1.3rem;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin: 1rem 0 1.2rem 0;
+        }
+
+        .feature-list li {
+            font-size: 0.85rem;
+            padding: 0.35rem 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #2c3e66;
+            border-bottom: 1px dashed #eef2f8;
+        }
+
+        .feature-list li::before {
+            content: "▹";
+            color: #3b82f6;
+            font-weight: 500;
+            font-size: 0.75rem;
+        }
+
+        .highlight {
+            background: #f8fafc;
+            border-radius: 14px;
+            padding: 0.7rem 1rem;
+            margin: 1rem 0 1.2rem 0;
+            font-size: 0.8rem;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            color: #0f3b5c;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .btn-launch {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background: #0f172a;
+            color: white;
+            padding: 0.7rem 1.5rem;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: all 0.2s;
+            margin-top: 0.3rem;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .btn-launch:hover {
+            background: #1e293b;
+            transform: scale(0.98);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #94a3b8;
+            color: #1e293b;
+            margin-left: 0.8rem;
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 1.2rem;
+            border-top: 1px solid #e2e8f0;
+            font-size: 0.8rem;
+            color: #5b6e8c;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        @media (max-width: 720px) {
+            body {
+                padding: 1.2rem;
+            }
+            .hero h1 {
+                font-size: 1.9rem;
+            }
+            .card-header h2 {
+                font-size: 1.3rem;
+            }
+            .btn-launch {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        .tech-badge {
+            background: #eef2ff;
+            color: #1e40af;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.6rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <h1>⚡ LLM 工程工具箱</h1>
+        <div class="sub">性能洞察 × 批量评测 · 双引擎协同工作流</div>
+        <div class="badge-group">
+            <span class="badge">🚀 LiteLLM 监控</span>
+            <span class="badge">🧪 模型基准测试</span>
+            <span class="badge">📊 实时指标 & 令牌分析</span>
+            <span class="badge">🖥️ 本地 / 云端模型通用</span>
+        </div>
+    </div>
+
+    <div class="tools-grid">
+        <!-- 卡片 1: LiteLLM Monitor (litellm-performance.html) -->
+        <div class="tool-card">
+            <div class="card-header">
+                <div class="card-icon">📈</div>
+                <h2>LiteLLM 观测站</h2>
+            </div>
+            <div class="card-body">
+                <div class="desc">
+                    实时连接 LiteLLM 代理服务，深度监控模型网关性能。提供 Prometheus 指标可视化、并发请求解析、模型用量排行和主动测试能力。
+                </div>
+                <ul class="feature-list">
+                    <li>🔍 实时 In‑Flight 并发 / 总请求 / 失败计数</li>
+                    <li>📊 细粒度模型 Token 消耗 (输入/输出/总量) 及占比条形图</li>
+                    <li>⚡ 动态轮询 /metrics 与 /health/backlog，适配任意 LiteLLM 实例</li>
+                    <li>🧪 集成「Test & Measure」抽屉 — 流式评测模型 TTFT、生成吞吐 (tok/s)</li>
+                    <li>🎨 暗色/浅色主题自适应，类终端日志面板</li>
+                </ul>
+                <div class="highlight">
+                    🔌 支持自定义 Endpoint + Master Key，通过 /v1/models 自动获取模型列表。<br>
+                    📍 默认地址: http://localhost:4000
+                </div>
+                <a href="litellm-performance.html" class="btn-launch" target="_blank" rel="noopener noreferrer">
+                    🔎 打开 LiteLLM 监控面板 →
+                </a>
+            </div>
+        </div>
+
+        <!-- 卡片 2: LLM 评测增强版 (LLMtester.html) -->
+        <div class="tool-card">
+            <div class="card-header">
+                <div class="card-icon">🧠</div>
+                <h2>LLM 批量测试台</h2>
+            </div>
+            <div class="card-body">
+                <div class="desc">
+                    强大灵活的通用 LLM 基准测试工具，支持 Ollama、LM Studio、llama.cpp、OpenAI、Groq、DeepSeek 等数十种后端。多模型对比、上下文策略、动态队列管理。
+                </div>
+                <ul class="feature-list">
+                    <li>✅ 支持 OpenAI 兼容服务 / 本地引擎 (LM Studio, Ollama, llama.cpp, LiteLLM, Jan)</li>
+                    <li>📋 自定义题库 (每行一个问题)，滑动窗口 / 完整上下文 / 无上下文三种模式</li>
+                    <li>🎛️ 多模型选择 & 动态队列: 可中途添加模型、跳过当前模型、移除未测模型</li>
+                    <li>⏱️ 模型间延时控制、实时回答流式渲染、耗时统计及失败处理</li>
+                    <li>📄 结果可下载为 TXT 报告，支持折叠/展开各模型详情，错误高亮</li>
+                </ul>
+                <div class="highlight">
+                    ✨ 增强管理: 测试过程中任意加入新模型，跳过出错的模型，保留上下文窗口控制。<br>
+                    🧩 默认对接 LM Studio (http://localhost:1234) 或任意自定义服务。
+                </div>
+                <a href="LLMtester.html" class="btn-launch" target="_blank" rel="noopener noreferrer">
+                    🧪 启动批量评测 →
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 并排简介区：突出两个工具配合使用场景 -->
+    <div style="background: #ffffffd9; border-radius: 1.5rem; padding: 1.5rem; margin: 1rem 0 0.5rem; border: 1px solid #e7edf4;">
+        <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; justify-content: space-between; align-items: center;">
+            <div style="flex:1; min-width: 180px;">
+                <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 0.3rem; display: flex; gap: 6px;"><span>🔄 工作流建议</span></div>
+                <div style="font-size: 0.8rem; color: #2d3a5e; line-height: 1.5;">
+                    1️⃣ 使用 <strong>LiteLLM 观测站</strong> 监控代理网关健康度、实时请求量和各模型 Token 消耗。<br>
+                    2️⃣ 搭配 <strong>LLM 批量测试台</strong> 对候选模型进行标准化问答评测，对比响应质量与耗时。<br>
+                    <span style="background: #f1f5f9; padding:0.1rem 0.3rem; border-radius: 8px;">⚙️ 两者互补: 观测站洞察生产负载，评测台验证模型精度与上下文连贯性。</span>
+                </div>
+            </div>
+            <div style="font-family: monospace; font-size: 0.7rem; background: #11181c10; padding: 0.6rem 1rem; border-radius: 20px; color: #2c5282;">
+                📁 同目录部署: index.html / litellm-performance.html / LLMtester.html
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-note">
+        <span>✨ 开源友好 · 纯前端工具 (需配合本地或远端 API 服务)</span>
+        <span>🔐 所有 API 密钥/地址仅存储于浏览器本地</span>
+    </div>
+</div>
+
+<!-- 增加隐式兼容检测和一点简单的交互提示 -->
+<script>
+    (function() {
+        // 优雅地检测文件是否存在（仅在控制台输出友好提示，非强制）
+        const checkFile = (filename) => {
+            fetch(filename, { method: 'HEAD', cache: 'no-cache' })
+                .then(resp => {
+                    if (!resp.ok) console.warn(`[导航] 未检测到 ${filename}，请确保该文件与 index.html 在同一目录。`); 
+                    else console.log(`✅ ${filename} 就绪`);
+                })
+                .catch(() => console.warn(`⚠️ 无法访问 ${filename}，请确认文件路径`));
+        };
+        // 仅安静检测，提升用户体验但不影响主要功能
+        if (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            setTimeout(() => {
+                checkFile('litellm-performance.html');
+                checkFile('LLMtester.html');
+            }, 500);
+        }
+    })();
+</script>
+</body>
+</html>
