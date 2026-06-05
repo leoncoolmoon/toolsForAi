@@ -229,7 +229,7 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
 .rpm-badge { display: inline-flex; align-items: center; gap: 4px; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 4px; padding: 1px 7px; font-size: 10px; color: var(--accent3); font-family: var(--mono); }
 /* Per-model RPM input in result header */
 .model-rpm-wrap { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text3); font-family: var(--mono); margin-left: 8px; }
-.model-rpm-input { width: fit-content; height: 20px; padding: 1px 4px; font-size: 11px; font-family: var(--mono); text-align: center; background: var(--surface2); border: 1px solid var(--border2); border-radius: 4px; color: var(--accent3); }
+.model-rpm-input { width: 52px; height: 20px; padding: 1px 4px; font-size: 11px; font-family: var(--mono); text-align: center; background: var(--surface2); border: 1px solid var(--border2); border-radius: 4px; color: var(--accent3); }
 .model-rpm-input:focus { border-color: var(--accent3); box-shadow: 0 0 0 2px rgba(245,158,11,0.12); }
 .model-rpm-input::placeholder { color: var(--text3); }
 
@@ -316,6 +316,12 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
 <div class="section">
   <div class="label">可用模型 <span id="modelCount" style="font-style:italic;font-weight:400;opacity:0.7;"></span></div>
   <div id="modelsGrid" class="models-grid"><div class="empty-msg">请先点击「获取模型」</div></div>
+</div>
+
+<!-- System Prompt -->
+<div class="section">
+  <div class="label">系统提示词 <span class="label-badge">可选</span></div>
+  <textarea id="systemPrompt" style="width:100%;min-height:72px;resize:vertical;line-height:1.6;font-family:var(--mono);font-size:12px;" placeholder="留空则不发送 system 消息。每次 request 都会携带此内容作为 system role。&#10;例如：你是一个简洁的助手，回答不超过100字。"></textarea>
 </div>
 
 <!-- Questions with line numbers -->
@@ -603,10 +609,18 @@ function buildAttachPreviewHtml(matchedAtts) {
 // =================== Core state ===================
 function getCtxMode() { return document.querySelector('input[name=ctxMode]:checked')?.value||'window'; }
 function getCtxWindow() { return Math.max(1,parseInt(document.getElementById('ctxWindowSize').value)||3); }
+function getSystemPrompt() {
+  return (document.getElementById('systemPrompt')?.value || '').trim();
+}
+
 function buildMessages(history,mode,windowSize) {
-  if(mode==='none') return [history[history.length-1]];
-  if(mode==='window'){const keep=windowSize*2+1;return history.slice(-keep);}
-  return [...history];
+  let msgs;
+  if(mode==='none') msgs=[history[history.length-1]];
+  else if(mode==='window'){const keep=windowSize*2+1; msgs=history.slice(-keep);}
+  else msgs=[...history];
+  const sys=getSystemPrompt();
+  if(sys) msgs=[{role:'system',content:sys},...msgs];
+  return msgs;
 }
 
 let models=[], selectedModels=new Set(), results={};
