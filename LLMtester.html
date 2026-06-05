@@ -3,56 +3,244 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LLM Benchmark - 增强管理版</title>
+<title>LLM Benchmark · 全能版</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap');
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f4; color: #1c1917; padding: 2rem; min-height: 100vh; }
-.app { max-width: 950px; margin: 0 auto; }
-h1 { font-size: 20px; font-weight: 700; color: #111; letter-spacing: -0.02em; margin-bottom: 4px; }
-.sub { font-size: 13px; color: #78716c; margin-bottom: 2rem; }
-.section { margin-bottom: 1.4rem; }
-.label { font-size: 10px; font-weight: 700; color: #a8a29e; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 7px; display: flex; align-items: center; gap: 6px; }
-.label-badge { font-size: 9px; background: #e7e5e4; color: #78716c; border-radius: 3px; padding: 1px 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-.row { display: flex; gap: 8px; align-items: center; }
-input[type=text], textarea, select {
-  background: #fff; border: 1px solid #d6d3d1; color: #1c1917;
-  border-radius: 6px; padding: 8px 12px; font-family: inherit; font-size: 13px;
+
+:root, [data-theme="dark"] {
+  --bg: #0f0f0f; --surface: #191919; --surface2: #222222;
+  --border: #2a2a2a; --border2: #333;
+  --text: #e8e8e8; --text2: #888; --text3: #555;
+  --accent: #4ade80; --accent2: #22d3ee; --accent3: #f59e0b;
+  --danger: #f87171; --purple: #a78bfa;
+  --mono: 'IBM Plex Mono', monospace; --sans: 'IBM Plex Sans', sans-serif;
+}
+[data-theme="light"] {
+  --bg: #f5f5f4; --surface: #ffffff; --surface2: #f0f0ef;
+  --border: #e0dedd; --border2: #d0cecd;
+  --text: #1c1917; --text2: #6b7280; --text3: #a8a29e;
+  --accent: #16a34a; --accent2: #0891b2; --accent3: #d97706;
+  --danger: #dc2626; --purple: #7c3aed;
+}
+@media (prefers-color-scheme: light) {
+  [data-theme="system"] {
+    --bg: #f5f5f4; --surface: #ffffff; --surface2: #f0f0ef;
+    --border: #e0dedd; --border2: #d0cecd;
+    --text: #1c1917; --text2: #6b7280; --text3: #a8a29e;
+    --accent: #16a34a; --accent2: #0891b2; --accent3: #d97706;
+    --danger: #dc2626; --purple: #7c3aed;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] {
+    --bg: #0f0f0f; --surface: #191919; --surface2: #222222;
+    --border: #2a2a2a; --border2: #333;
+    --text: #e8e8e8; --text2: #888; --text3: #555;
+    --accent: #4ade80; --accent2: #22d3ee; --accent3: #f59e0b;
+    --danger: #f87171; --purple: #a78bfa;
+  }
+}
+
+body { font-family: var(--sans); background: var(--bg); color: var(--text); padding: 2rem; min-height: 100vh; line-height: 1.5; }
+.app { max-width: 980px; margin: 0 auto; }
+
+.header { margin-bottom: 2.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.header-left { flex: 1; min-width: 0; }
+.header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; }
+.header h1 .green { color: var(--accent); }
+.header .sub { font-size: 12px; color: var(--text2); margin-top: 4px; font-family: var(--mono); }
+
+.theme-switcher { display: flex; gap: 4px; flex-shrink: 0; align-items: center; margin-top: 2px; }
+.theme-btn { background: none; border: 1px solid var(--border2); color: var(--text3); border-radius: 6px; padding: 0 10px; height: 28px; font-size: 11px; cursor: pointer; transition: all 0.15s; font-family: var(--mono); font-weight: 500; white-space: nowrap; }
+.theme-btn:hover { border-color: var(--text3); color: var(--text); background: var(--surface2); }
+.theme-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(74,222,128,0.08); }
+[data-theme="light"] .theme-btn.active { background: rgba(22,163,74,0.08); }
+
+.label { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.label-badge { font-size: 9px; background: var(--surface2); color: var(--text2); border-radius: 3px; padding: 1px 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid var(--border2); }
+.section { margin-bottom: 1.6rem; }
+
+input[type=text], input[type=number], textarea, select {
+  background: var(--surface); border: 1px solid var(--border2); color: var(--text);
+  border-radius: 6px; padding: 8px 12px; font-family: var(--sans); font-size: 13px;
   outline: none; transition: border-color 0.15s, box-shadow 0.15s;
 }
-input[type=text]:focus, textarea:focus, select:focus { border-color: #a78bfa; box-shadow: 0 0 0 3px #ede9fe; }
+input[type=text]:focus, input[type=number]:focus, textarea:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(74,222,128,0.12); }
 input[type=text], select { height: 36px; }
-.url-input { flex: 1; font-family: 'SF Mono', monospace; font-size: 12px; }
-textarea { width: 100%; min-height: 140px; resize: vertical; line-height: 1.6; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
+.url-input { flex: 1; font-family: var(--mono); font-size: 12px; }
 select { cursor: pointer; }
-button {
-  background: #fff; border: 1px solid #d6d3d1; color: #44403c;
-  border-radius: 6px; padding: 0 14px; height: 36px; font-family: inherit;
-  font-size: 13px; cursor: pointer; transition: background 0.15s, border-color 0.15s;
-  white-space: nowrap;
-}
-button:hover { background: #f5f5f4; border-color: #a8a29e; }
-button:disabled { opacity: 0.4; cursor: not-allowed; }
-.start-btn {
-  background: #1c1917; color: #fafaf9; border-color: #1c1917;
-  font-weight: 600; padding: 0 22px; height: 38px;
-}
-.start-btn:hover { background: #292524; border-color: #292524; }
-.start-btn:disabled { background: #d6d3d1; color: #a8a29e; border-color: #d6d3d1; }
-.stop-btn {
-  background: #ef4444; color: white; border-color: #ef4444;
-}
-.stop-btn:hover { background: #dc2626; border-color: #dc2626; }
 
-/* Server config card */
-.server-card { background: #fff; border: 1px solid #e7e5e4; border-radius: 10px; padding: 14px 16px; margin-bottom: 1.4rem; }
+button { background: var(--surface); border: 1px solid var(--border2); color: var(--text2); border-radius: 6px; padding: 0 14px; height: 36px; font-family: var(--sans); font-size: 12px; cursor: pointer; transition: all 0.15s; white-space: nowrap; font-weight: 500; }
+button:hover { background: var(--surface2); border-color: var(--text3); color: var(--text); }
+button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.start-btn { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; padding: 0 22px; height: 38px; font-size: 13px; }
+.start-btn:hover { background: #22c55e; border-color: #22c55e; }
+.start-btn:disabled { background: var(--surface2); color: var(--text3); border-color: var(--border); }
+.stop-btn { background: var(--danger); color: #000; border-color: var(--danger); font-weight: 700; }
+.stop-btn:hover { background: #ef4444; }
+
+.server-card { background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 14px 16px; margin-bottom: 1.6rem; }
 .server-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
 .server-row:last-child { margin-bottom: 0; }
-.server-type-select { width: 180px; flex-shrink: 0; }
+.server-type-select { width: 200px; flex-shrink: 0; }
 .api-key-input { flex: 1; min-width: 0; }
+.hint { font-size: 11px; color: var(--text3); margin-top: 5px; line-height: 1.5; }
+.hint code { font-family: var(--mono); background: var(--surface2); padding: 1px 4px; border-radius: 3px; font-size: 10px; color: var(--accent2); }
+.hint a { color: var(--accent2); }
+.error-msg { font-size: 12px; color: var(--danger); margin-top: 6px; }
 
-/* Mobile responsive */
-@media (max-width: 540px) {
+.models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px; }
+.model-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--border2); border-radius: 6px; cursor: pointer; background: var(--surface); transition: border-color 0.15s, background 0.15s; user-select: none; }
+.model-item:hover { border-color: var(--accent); background: rgba(74,222,128,0.05); }
+.model-item.selected { border-color: var(--accent); background: rgba(74,222,128,0.08); }
+.model-item input[type=checkbox] { accent-color: var(--accent); width: 13px; height: 13px; flex-shrink: 0; cursor: pointer; }
+.model-name { font-size: 12px; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); }
+.model-item.selected .model-name { color: var(--accent); }
+.empty-msg { font-size: 13px; color: var(--text3); text-align: center; padding: 1.5rem 0; }
+
+/* Line numbers */
+.questions-wrap { position: relative; display: flex; border: 1px solid var(--border2); border-radius: 6px; overflow: hidden; background: var(--surface); }
+.questions-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(74,222,128,0.12); }
+.line-numbers { font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--text3); background: var(--surface2); padding: 8px 10px 8px 8px; text-align: right; user-select: none; min-width: 36px; border-right: 1px solid var(--border); white-space: pre; overflow: hidden; }
+#questions { border: none; border-radius: 0; box-shadow: none; flex: 1; min-height: 120px; resize: vertical; line-height: 1.65; font-family: var(--mono); font-size: 12px; padding: 8px 12px; background: transparent; }
+#questions:focus { border: none; box-shadow: none; }
+
+/* Attachments */
+.attach-area { background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 14px 16px; }
+.attach-tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--border); padding-bottom: 10px; flex-wrap: wrap; }
+.attach-tab { background: none; border: 1px solid transparent; color: var(--text3); border-radius: 6px; padding: 4px 12px; height: 30px; font-size: 12px; cursor: pointer; transition: all 0.15s; font-weight: 500; display: flex; align-items: center; gap: 5px; user-select: none; }
+.attach-type-cb { accent-color: var(--accent); cursor: pointer; width: 13px; height: 13px; flex-shrink: 0; }
+.attach-tab:hover { background: var(--surface2); border-color: var(--border2); color: var(--text); }
+.attach-tab.active { background: var(--surface2); border-color: var(--accent); color: var(--accent); }
+.attach-panel { display: none; }
+.attach-panel.active { display: block; }
+
+.drop-zone { border: 2px dashed var(--border2); border-radius: 8px; padding: 24px 20px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; }
+.drop-zone:hover, .drop-zone.drag-over { border-color: var(--accent); background: rgba(74,222,128,0.04); }
+.drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.drop-icon { font-size: 26px; margin-bottom: 6px; }
+.drop-text { font-size: 13px; color: var(--text2); }
+.drop-sub { font-size: 11px; color: var(--text3); margin-top: 4px; font-family: var(--mono); }
+
+.attachments-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.attachment-item { display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; align-items: start; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+.attachment-preview { width: 44px; height: 44px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border2); }
+.attachment-preview.icon-preview { display: flex; align-items: center; justify-content: center; background: var(--surface); font-size: 22px; }
+.attachment-info { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.attachment-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.attachment-name { font-size: 12px; font-family: var(--mono); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+.attachment-autonum { font-size: 10px; font-family: var(--mono); color: var(--text3); background: var(--surface); border: 1px solid var(--border2); border-radius: 3px; padding: 1px 5px; white-space: nowrap; }
+.attachment-meta { font-size: 11px; color: var(--text3); }
+.attachment-label-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.attachment-label-hint { font-size: 10px; color: var(--text3); white-space: nowrap; }
+.attachment-label-input { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: 12px; font-family: var(--mono); color: var(--accent2); height: 26px; width: 140px; }
+.attachment-label-input::placeholder { color: var(--text3); font-size: 11px; }
+.attachment-label-input:focus { border-color: var(--accent2); box-shadow: 0 0 0 2px rgba(34,211,238,0.1); }
+.attachment-preview-link { font-size: 11px; color: var(--accent2); text-decoration: none; font-family: var(--mono); }
+.attachment-preview-link:hover { text-decoration: underline; }
+.remove-attach-btn { background: none; border: none; color: var(--text3); font-size: 16px; cursor: pointer; padding: 2px 4px; border-radius: 4px; height: auto; align-self: start; }
+.remove-attach-btn:hover { color: var(--danger); background: rgba(248,113,113,0.1); }
+.attach-summary-badge { display: inline-flex; align-items: center; gap: 4px; background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.3); border-radius: 4px; padding: 2px 8px; font-size: 11px; color: var(--accent); font-family: var(--mono); margin-left: 6px; }
+.attach-logic-hint { margin-top: 12px; padding: 10px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; font-size: 11px; color: var(--text3); line-height: 1.7; font-family: var(--mono); }
+.attach-logic-hint b { color: var(--accent2); font-weight: 600; }
+
+/* Context */
+.ctx-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ctx-option { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--border2); border-radius: 8px; cursor: pointer; background: var(--surface); transition: border-color 0.15s, background 0.15s; user-select: none; flex-shrink: 0; }
+.ctx-option:hover { border-color: var(--accent); background: rgba(74,222,128,0.05); }
+.ctx-option input[type=radio] { display: none; }
+.ctx-option:has(input:checked) { border-color: var(--accent); background: rgba(74,222,128,0.08); }
+.ctx-icon { font-size: 16px; color: var(--text3); line-height: 1; }
+.ctx-option:has(input:checked) .ctx-icon { color: var(--accent); }
+.ctx-title { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; }
+.ctx-desc { font-size: 11px; color: var(--text3); line-height: 1.3; }
+.ctx-window-size { font-size: 12px; color: var(--text2); display: flex; align-items: center; gap: 6px; padding: 4px 0; }
+.ctx-window-size input { width: 48px; height: 28px; padding: 4px 6px; text-align: center; }
+
+/* Actions */
+.actions-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.delay-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; font-size: 12px; color: var(--text2); }
+.delay-label { display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
+.delay-input { width: 60px; text-align: center; font-size: 12px; }
+.rpm-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; font-size: 12px; color: var(--text2); }
+.rpm-input { width: 72px; text-align: center; font-size: 12px; font-family: var(--mono); }
+/* Per-model RPM input inside result card header */
+.model-rpm-wrap { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text3); font-family: var(--mono); margin-left: 10px; user-select: none; }
+.model-rpm-wrap label { white-space: nowrap; cursor: default; }
+.model-rpm-input { width: 56px; height: 22px; font-size: 11px; font-family: var(--mono); text-align: center; padding: 2px 4px; border-radius: 4px; background: var(--surface2); border: 1px solid var(--border2); color: var(--accent2); }
+.model-rpm-input:focus { border-color: var(--accent2); box-shadow: 0 0 0 2px rgba(34,211,238,0.1); outline: none; }
+.model-rpm-input::placeholder { color: var(--text3); }
+/* RPM throttle indicator on time tag */
+.rpm-delay-tag { color: var(--accent3); font-family: var(--mono); font-size: 11px; margin-left: 6px; }
+.status-bar { font-size: 12px; color: var(--text2); display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border2); flex-shrink: 0; }
+.dot.running { background: var(--accent); animation: pulse 1s ease-in-out infinite; }
+.dot.done { background: var(--accent); }
+.dot.error { background: var(--danger); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.progress-bar-wrap { height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+.progress-bar { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
+
+/* Results */
+.results { margin-top: 1.8rem; }
+.toolbar-row { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; justify-content: space-between; align-items: center; }
+.toolbar-left { display: flex; gap: 6px; }
+.toolbar-right { display: flex; gap: 6px; }
+.toolbar-row button { font-size: 11px; height: 26px; padding: 0 10px; }
+.model-result { border: 1px solid var(--border2); border-radius: 10px; margin-bottom: 10px; background: var(--surface); overflow: hidden; }
+.model-result-header { padding: 11px 14px; background: var(--surface); display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; transition: background 0.15s; }
+.model-result-header:hover { background: var(--surface2); }
+.model-result.open .model-result-header { border-bottom: 1px solid var(--border); }
+.header-left { display: flex; align-items: center; gap: 8px; }
+.arrow { font-size: 9px; color: var(--text3); transition: transform 0.2s; display: inline-block; }
+.model-result:not(.open) .arrow { transform: rotate(-90deg); }
+.result-model-name { font-size: 13px; font-weight: 600; color: var(--text); font-family: var(--mono); }
+.result-stat { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 10px; }
+.delete-queue-btn { font-size: 11px; background: none; border: 1px solid var(--border); border-radius: 12px; padding: 2px 8px; height: 22px; color: var(--text3); margin-left: 8px; cursor: pointer; }
+.delete-queue-btn:hover { background: rgba(248,113,113,0.1); border-color: var(--danger); color: var(--danger); }
+.skip-model-btn { font-size: 11px; background: none; border: 1px solid var(--border2); border-radius: 12px; padding: 2px 8px; height: 22px; color: var(--accent3); margin-left: 4px; cursor: pointer; display: none; }
+.skip-model-btn:hover { background: rgba(245,158,11,0.1); border-color: var(--accent3); }
+.model-result.canceled { opacity: 0.5; }
+.model-result-body { display: none; }
+.model-result.open .model-result-body { display: block; }
+
+.qa-item { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.qa-item:last-child { border-bottom: none; }
+.q-label { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+.q-linenum { font-family: var(--mono); background: var(--surface2); border: 1px solid var(--border2); border-radius: 3px; padding: 0 5px; font-size: 10px; color: var(--text3); }
+.q-text { font-size: 13px; color: var(--text2); margin-bottom: 10px; line-height: 1.55; }
+.q-attachments { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.q-attach-chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; font-size: 11px; font-family: var(--mono); color: var(--text3); display: flex; align-items: center; gap: 6px; }
+.q-attach-thumb { width: 32px; height: 32px; border-radius: 4px; object-fit: cover; border: 1px solid var(--border2); }
+.q-attach-chip .match-rule { font-size: 10px; color: var(--accent3); margin-left: 2px; }
+.a-label { font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+.a-line { font-size: 13px; color: var(--text); line-height: 1.75; white-space: pre-wrap; word-break: break-word; }
+.a-line.pending { color: var(--text3); font-style: italic; }
+.a-line.error { color: var(--danger); background: rgba(248,113,113,0.06); border-left: 2px solid var(--danger); padding-left: 10px; border-radius: 0 4px 4px 0; }
+.time-tag { font-size: 11px; color: var(--text3); margin-top: 6px; font-family: var(--mono); }
+.rpm-delay-tag { font-size: 10px; color: var(--accent3); margin-top: 3px; font-family: var(--mono); }
+
+/* RPM controls */
+.rpm-global-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--text2); }
+.rpm-input { width: 68px; text-align: center; font-size: 12px; font-family: var(--mono); }
+.rpm-badge { display: inline-flex; align-items: center; gap: 4px; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 4px; padding: 1px 7px; font-size: 10px; color: var(--accent3); font-family: var(--mono); }
+/* Per-model RPM input in result header */
+.model-rpm-wrap { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text3); font-family: var(--mono); margin-left: 8px; }
+.model-rpm-input { width: fit-content; height: 20px; padding: 1px 4px; font-size: 11px; font-family: var(--mono); text-align: center; background: var(--surface2); border: 1px solid var(--border2); border-radius: 4px; color: var(--accent3); }
+.model-rpm-input:focus { border-color: var(--accent3); box-shadow: 0 0 0 2px rgba(245,158,11,0.12); }
+.model-rpm-input::placeholder { color: var(--text3); }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+@media (max-width: 600px) {
   body { padding: 1rem; }
+  .header { flex-direction: column; gap: 10px; }
+  .models-grid { grid-template-columns: 1fr 1fr; }
   .server-row { flex-direction: column; align-items: stretch; }
   .server-type-select { width: 100%; }
   .url-input { width: 100%; }
@@ -60,558 +248,745 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   .api-key-input { width: 100%; }
   .ctx-bar { flex-direction: column; align-items: stretch; }
   .ctx-option { width: 100%; }
-  .ctx-window-size { justify-content: flex-start; }
   .actions-row { flex-direction: column; align-items: stretch; }
   .actions-row button { width: 100%; }
   .toolbar-row { flex-direction: column; gap: 4px; }
   .toolbar-left, .toolbar-right { display: flex; gap: 6px; }
-  .models-grid { grid-template-columns: 1fr 1fr; }
+  .attach-tabs { flex-wrap: wrap; }
+  .attachment-item { grid-template-columns: 40px 1fr auto; }
 }
-.hint { font-size: 11px; color: #a8a29e; margin-top: 5px; line-height: 1.5; }
-.hint code { font-family: 'SF Mono', monospace; background: #f5f5f4; padding: 1px 4px; border-radius: 3px; font-size: 10px; }
-.error-msg { font-size: 12px; color: #dc2626; margin-top: 6px; }
-.models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px; }
-.model-item {
-  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
-  border: 1px solid #e7e5e4; border-radius: 6px; cursor: pointer; background: #fff;
-  transition: border-color 0.15s, background 0.15s; user-select: none;
-}
-.model-item:hover { border-color: #c4b5fd; background: #faf5ff; }
-.model-item.selected { border-color: #7c3aed; background: #f5f3ff; }
-.model-item input[type=checkbox] { accent-color: #7c3aed; width: 13px; height: 13px; flex-shrink: 0; cursor: pointer; }
-.model-name { font-size: 12px; color: #44403c; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: 'SF Mono', monospace; }
-.empty-msg { font-size: 13px; color: #a8a29e; text-align: center; padding: 1.5rem 0; }
-
-/* Actions */
-.actions-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.delay-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; font-size: 13px; color: #44403c; }
-.delay-label { display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
-.delay-input { width: 60px; text-align: center; font-size: 13px; border: 1px solid #e7e5e4; border-radius: 6px; padding: 3px 6px; }
-.status-bar { font-size: 12px; color: #78716c; display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-.dot { width: 6px; height: 6px; border-radius: 50%; background: #d6d3d1; flex-shrink: 0; }
-.dot.running { background: #22c55e; animation: pulse 1s ease-in-out infinite; }
-.dot.done { background: #22c55e; }
-.dot.error { background: #ef4444; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-.progress-bar-wrap { height: 3px; background: #e7e5e4; border-radius: 2px; overflow: hidden; margin-top: 8px; }
-.progress-bar { height: 100%; background: #7c3aed; border-radius: 2px; transition: width 0.3s; }
-
-/* Results */
-.results { margin-top: 1.5rem; }
-.toolbar-row { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; justify-content: space-between; align-items: center; }
-.toolbar-left { display: flex; gap: 6px; }
-.toolbar-right { display: flex; gap: 6px; }
-.toolbar-row button { font-size: 11px; height: 26px; padding: 0 10px; color: #78716c; }
-.model-result { border: 1px solid #e7e5e4; border-radius: 10px; margin-bottom: 10px; background: #fff; overflow: hidden; }
-.model-result-header {
-  padding: 11px 14px; background: #fafaf9;
-  display: flex; align-items: center; justify-content: space-between;
-  cursor: pointer; user-select: none; transition: background 0.15s;
-}
-.model-result-header:hover { background: #f5f5f4; }
-.model-result.open .model-result-header { border-bottom: 1px solid #e7e5e4; }
-.header-left { display: flex; align-items: center; gap: 8px; }
-.arrow { font-size: 9px; color: #a8a29e; transition: transform 0.2s; display: inline-block; }
-.model-result:not(.open) .arrow { transform: rotate(-90deg); }
-.result-model-name { font-size: 13px; font-weight: 600; color: #1c1917; font-family: 'SF Mono', monospace; }
-.result-stat { font-size: 11px; color: #a8a29e; display: flex; align-items: center; gap: 10px; }
-.delete-queue-btn {
-  font-size: 11px; background: none; border: 1px solid #e7e5e4; border-radius: 12px;
-  padding: 2px 8px; height: 22px; color: #a8a29e; margin-left: 8px; cursor: pointer;
-}
-.delete-queue-btn:hover { background: #fee2e2; border-color: #fecaca; color: #dc2626; }
-.skip-model-btn {
-  font-size: 11px; background: none; border: 1px solid #fde68a; border-radius: 12px;
-  padding: 2px 8px; height: 22px; color: #92400e; margin-left: 4px; cursor: pointer; display: none;
-}
-.skip-model-btn:hover { background: #fef3c7; border-color: #f59e0b; color: #78350f; }
-.model-result.canceled { opacity: 0.6; background: #fef2f2; }
-.model-result.canceled .model-result-header { background: #fef2f2; }
-.model-result-body { display: none; }
-.model-result.open .model-result-body { display: block; }
-.qa-item { padding: 12px 14px; border-bottom: 1px solid #f5f5f4; }
-.qa-item:last-child { border-bottom: none; }
-.q-label { font-size: 10px; font-weight: 700; color: #a8a29e; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3px; }
-.q-text { font-size: 13px; color: #44403c; margin-bottom: 10px; line-height: 1.5; }
-.a-label { font-size: 10px; font-weight: 700; color: #7c3aed; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
-.a-line { font-size: 13px; color: #1c1917; line-height: 1.75; white-space: pre-wrap; word-break: break-word; }
-.a-line.pending { color: #a8a29e; font-style: italic; }
-.a-line.error { color: #dc2626; font-style: italic; background: #fef2f2; border-left: 3px solid #fca5a5; padding-left: 8px; border-radius: 0 4px 4px 0; }
-.time-tag { font-size: 11px; color: #c4b5fd; margin-top: 6px; }
-.ctx-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.ctx-option {
-  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
-  border: 1px solid #e7e5e4; border-radius: 8px; cursor: pointer; background: #fff;
-  transition: border-color 0.15s, background 0.15s; user-select: none; flex-shrink: 0;
-}
-.ctx-option:hover { border-color: #c4b5fd; background: #faf5ff; }
-.ctx-option input[type=radio] { display: none; }
-.ctx-option:has(input:checked) { border-color: #7c3aed; background: #f5f3ff; }
-.ctx-icon { font-size: 16px; color: #a8a29e; line-height: 1; }
-.ctx-option:has(input:checked) .ctx-icon { color: #7c3aed; }
-.ctx-title { font-size: 12px; font-weight: 600; color: #1c1917; line-height: 1.3; }
-.ctx-option:has(input:checked) .ctx-title { color: #6d28d9; }
-.ctx-desc { font-size: 11px; color: #a8a29e; line-height: 1.3; }
-.ctx-window-size { font-size: 12px; color: #78716c; display: flex; align-items: center; gap: 6px; padding: 4px 0; }
 </style>
 </head>
 <body>
 <div class="app">
-  <h1>LLM Benchmark</h1>
-  <p class="sub">支持 Ollama、LM Studio、llama.cpp、LiteLLM、OpenAI 及各类兼容服务 · 动态管理待测队列</p>
 
-  <!-- Server Config -->
-  <div class="server-card">
-    <div class="server-row">
-      <select id="serverType" class="server-type-select">
-        <optgroup label="本地服务">
-          <option value="ollama">Ollama</option>
-          <option value="lmstudio" selected>LM Studio</option>
-          <option value="llamacpp">llama.cpp</option>
-          <option value="jan">Jan</option>
-          <option value="litellm">LiteLLM</option>
-          <option value="lmstudio_legacy">LM Studio (旧版 &lt;0.2.17)</option>
-        </optgroup>
-        <optgroup label="在线服务">
-          <option value="openai">OpenAI</option>
-          <option value="groq">Groq</option>
-          <option value="together">Together AI</option>
-          <option value="openrouter">OpenRouter</option>
-          <option value="deepseek">DeepSeek</option>
-          <option value="anthropic_compat">Anthropic (via proxy)</option>
-        </optgroup>
-        <optgroup label="自定义">
-          <option value="custom">自定义 OpenAI 兼容端点</option>
-        </optgroup>
-      </select>
-      <input class="url-input" id="serverUrl" type="text" value="http://localhost:1234" />
-      <button id="fetchBtn">获取模型 →</button>
-    </div>
-    <div class="server-row" id="apiKeyRow" style="display:none;">
-      <span style="font-size:12px;color:#78716c;white-space:nowrap;">API Key</span>
-      <input class="api-key-input" id="apiKey" placeholder="sk-..." />
-    </div>
-    <div class="hint" id="serverHint"></div>
-    <div id="fetchError" class="error-msg" style="display:none;"></div>
+<div class="header">
+  <div class="header-left">
+    <h1>LLM <span class="green">Benchmark</span> <span style="font-size:13px;font-weight:400;color:var(--text3);font-family:var(--mono);">· 全能版</span></h1>
+    <p class="sub">支持文本 · 图片 · 音频 · 文件 多模态 · 动态队列管理 · 20+ 服务商</p>
   </div>
+  <div class="theme-switcher">
+    <button class="theme-btn active" data-theme-btn="dark">暗色</button>
+    <button class="theme-btn" data-theme-btn="light">亮色</button>
+    <button class="theme-btn" data-theme-btn="system">跟随系统</button>
+  </div>
+</div>
 
-  <div class="section">
-    <div class="label">可用模型 <span id="modelCount" style="font-style:italic;font-weight:400;opacity:0.7;"></span></div>
-    <div id="modelsGrid" class="models-grid">
-      <div class="empty-msg">请先点击「获取模型」</div>
+<!-- Server Config -->
+<div class="server-card">
+  <div class="server-row">
+    <select id="serverType" class="server-type-select">
+      <optgroup label="本地服务">
+        <option value="ollama">Ollama</option>
+        <option value="lmstudio" selected>LM Studio</option>
+        <option value="llamacpp">llama.cpp</option>
+        <option value="jan">Jan</option>
+        <option value="litellm">LiteLLM</option>
+        <option value="lmstudio_legacy">LM Studio (旧版 &lt;0.2.17)</option>
+      </optgroup>
+      <optgroup label="在线服务">
+        <option value="openai">OpenAI</option>
+        <option value="nvidia">NVIDIA NIM</option>
+        <option value="anthropic_compat">Anthropic (via proxy)</option>
+        <option value="google_compat">Google Gemini (via proxy)</option>
+        <option value="groq">Groq</option>
+        <option value="mistral">Mistral</option>
+        <option value="together">Together AI</option>
+        <option value="openrouter">OpenRouter</option>
+        <option value="deepseek">DeepSeek</option>
+        <option value="siliconflow">SiliconFlow</option>
+        <option value="zhipu">智谱 GLM</option>
+      </optgroup>
+      <optgroup label="自定义">
+        <option value="custom">自定义 OpenAI 兼容端点</option>
+      </optgroup>
+    </select>
+    <input class="url-input" id="serverUrl" type="text" value="http://localhost:1234" />
+    <button id="fetchBtn">获取模型 →</button>
+  </div>
+  <div class="server-row" id="apiKeyRow" style="display:none;">
+    <span style="font-size:12px;color:var(--text2);white-space:nowrap;" id="apiKeyLabel">API Key</span>
+    <input class="api-key-input" id="apiKey" placeholder="sk-..." />
+  </div>
+  <div class="hint" id="serverHint"></div>
+  <div id="fetchError" class="error-msg" style="display:none;"></div>
+</div>
+
+<!-- Models -->
+<div class="section">
+  <div class="label">可用模型 <span id="modelCount" style="font-style:italic;font-weight:400;opacity:0.7;"></span></div>
+  <div id="modelsGrid" class="models-grid"><div class="empty-msg">请先点击「获取模型」</div></div>
+</div>
+
+<!-- Questions with line numbers -->
+<div class="section">
+  <div class="label">考题列表 <span class="label-badge">每行一题 · 从第 0 行开始</span></div>
+  <div class="questions-wrap">
+    <div class="line-numbers" id="lineNumbers">0</div>
+    <textarea id="questions" placeholder="请输入测试题目，每行一道&#10;行号从 0 开始，可用于匹配附件&#10;例如：&#10;第0题：请描述这张图片&#10;第1题：这段音频说了什么？&#10;第2题：总结文档要点"></textarea>
+  </div>
+</div>
+
+<!-- Multimodal Attachments -->
+<div class="section">
+  <div class="label">
+    多模态附件
+    <span class="label-badge">可选</span>
+    <span id="attachSummary" class="attach-summary-badge" style="display:none;"></span>
+  </div>
+  <div class="attach-area">
+    <div class="attach-tabs">
+      <label class="attach-tab active" data-tab="images">
+        <input type="checkbox" id="enableImages" class="attach-type-cb" data-type="image"> 🖼 图片
+      </label>
+      <label class="attach-tab" data-tab="audio">
+        <input type="checkbox" id="enableAudio" class="attach-type-cb" data-type="audio"> 🎵 音频
+      </label>
+      <label class="attach-tab" data-tab="files">
+        <input type="checkbox" id="enableFiles" class="attach-type-cb" data-type="file"> 📄 文件
+      </label>
     </div>
-  </div>
 
-  <div class="section">
-    <div class="label">考题列表 <span class="label-badge">每行一题</span></div>
-    <textarea id="questions" placeholder="请输入测试题目，每行一道&#10;例如：&#10;解释一下什么是量子纠缠&#10;用 Python 写一个二分查找函数&#10;地球距离太阳多远？"></textarea>
-  </div>
-
-  <div class="section">
-    <div class="label">上下文模式</div>
-    <div class="ctx-bar">
-      <label class="ctx-option">
-        <input type="radio" name="ctxMode" value="none" />
-        <div class="ctx-icon">⊘</div>
-        <div><div class="ctx-title">无上下文</div><div class="ctx-desc">每题独立，互不影响</div></div>
-      </label>
-      <label class="ctx-option">
-        <input type="radio" name="ctxMode" value="window" checked />
-        <div class="ctx-icon">◫</div>
-        <div><div class="ctx-title">滑动窗口</div><div class="ctx-desc">保留最近 N 轮对话</div></div>
-      </label>
-      <label class="ctx-option">
-        <input type="radio" name="ctxMode" value="full" />
-        <div class="ctx-icon">≡</div>
-        <div><div class="ctx-title">完整上下文</div><div class="ctx-desc">保留全部历史（慎用）</div></div>
-      </label>
-      <div class="ctx-window-size" id="ctxWindowSizeWrap">
-        保留最近 <input type="number" id="ctxWindowSize" value="3" min="1" max="20" style="width:48px;height:28px;padding:4px 6px;text-align:center;font-family:inherit;" /> 轮
+    <div class="attach-panel active" id="panel-images">
+      <div class="drop-zone" id="imageDropZone">
+        <input type="file" id="imageInput" accept="image/*" multiple />
+        <div class="drop-icon">🖼️</div>
+        <div class="drop-text">拖放或点击上传图片</div>
+        <div class="drop-sub">支持 JPG · PNG · GIF · WebP（最大 20MB/张）</div>
       </div>
+      <div class="attachments-list" id="imagesList"></div>
     </div>
-    <div class="hint" id="ctxHint"></div>
-  </div>
 
-  <div class="section">
-    <div class="actions-row">
-      <button class="start-btn" id="startBtn" disabled>开始测试</button>
-      <button id="stopTestBtn" style="display:none;" class="stop-btn">⏹️ 停止测试</button>
-      <button id="addToQueueBtn" style="display:none;">➕ 加入测试列表</button>
-      <button id="dlBtn" style="display:none;">下载结果 ↓</button>
+    <div class="attach-panel" id="panel-audio">
+      <div class="drop-zone" id="audioDropZone">
+        <input type="file" id="audioInput" accept="audio/*" multiple />
+        <div class="drop-icon">🎵</div>
+        <div class="drop-text">拖放或点击上传音频</div>
+        <div class="drop-sub">支持 MP3 · WAV · OGG · M4A · FLAC（最大 25MB/个）</div>
+      </div>
+      <div class="attachments-list" id="audiosList"></div>
     </div>
-    <div class="delay-row">
-      <label class="delay-label">
-        <input type="checkbox" id="delayEnabled" checked> 模型间延时
-      </label>
-      <input type="number" id="delaySeconds" value="60" min="0" max="3600" class="delay-input"> 秒
-      <span class="hint" style="margin:0;">· 每个模型测试完成后等待，避免请求过于密集</span>
+
+    <div class="attach-panel" id="panel-files">
+      <div class="drop-zone" id="fileDropZone">
+        <input type="file" id="fileInput" accept=".pdf,.txt,.md,.csv,.json,.doc,.docx,.xlsx,.pptx" multiple />
+        <div class="drop-icon">📄</div>
+        <div class="drop-text">拖放或点击上传文件</div>
+        <div class="drop-sub">支持 PDF · TXT · MD · CSV · JSON · DOC · XLSX（最大 32MB/个）</div>
+      </div>
+      <div class="attachments-list" id="filesList"></div>
     </div>
-    <div class="status-bar" id="statusBar" style="display:none;">
-      <div class="dot" id="statusDot"></div>
-      <span id="statusText"></span>
-    </div>
-    <div class="progress-bar-wrap" id="progressWrap" style="display:none;">
-      <div class="progress-bar" id="progressBar" style="width:0%"></div>
+
+    <div class="attach-logic-hint">
+      <b>附件匹配规则</b>（每道题独立计算）<br>
+      <b>①</b> 标记为<b>数字</b>（如 <b>2</b>）→ 附加到行号相同的题&nbsp;&nbsp;
+      <b>②</b> 标记为<b>单词</b>（如 <b>cat</b>）→ 题目文本含该词时附加（大小写不敏感）<br>
+      <b>③</b> 题目含<b>完整文件名</b>（含扩展名）→ 精确匹配&nbsp;&nbsp;
+      <b>④</b> 以上均无命中 → 取上传序号等于行号的附件（兜底）<br>
+      同一题中同一附件只发送一次。
     </div>
   </div>
+</div>
 
-  <div id="resultsArea" class="results"></div>
+<!-- Context Mode -->
+<div class="section">
+  <div class="label">上下文模式</div>
+  <div class="ctx-bar">
+    <label class="ctx-option">
+      <input type="radio" name="ctxMode" value="none" />
+      <div class="ctx-icon">⊘</div>
+      <div><div class="ctx-title">无上下文</div><div class="ctx-desc">每题独立，互不影响</div></div>
+    </label>
+    <label class="ctx-option">
+      <input type="radio" name="ctxMode" value="window" checked />
+      <div class="ctx-icon">◫</div>
+      <div><div class="ctx-title">滑动窗口</div><div class="ctx-desc">保留最近 N 轮对话</div></div>
+    </label>
+    <label class="ctx-option">
+      <input type="radio" name="ctxMode" value="full" />
+      <div class="ctx-icon">≡</div>
+      <div><div class="ctx-title">完整上下文</div><div class="ctx-desc">保留全部历史（慎用）</div></div>
+    </label>
+    <div class="ctx-window-size" id="ctxWindowSizeWrap">
+      保留最近 <input type="number" id="ctxWindowSize" value="3" min="1" max="20" /> 轮
+    </div>
+  </div>
+  <div class="hint" id="ctxHint"></div>
+</div>
+
+<!-- Actions -->
+<div class="section">
+  <div class="actions-row">
+    <button class="start-btn" id="startBtn" disabled>▶ 开始测试</button>
+    <button id="stopTestBtn" style="display:none;" class="stop-btn">⏹ 停止测试</button>
+    <button id="addToQueueBtn" style="display:none;">➕ 加入队列</button>
+    <button id="dlBtn" style="display:none;">↓ 下载结果</button>
+  </div>
+  <div class="delay-row">
+    <label class="delay-label"><input type="checkbox" id="delayEnabled" checked> 模型间延时</label>
+    <input type="number" id="delaySeconds" value="60" min="0" max="3600" class="delay-input"> 秒
+    <span style="color:var(--text3);">· 避免请求过于密集</span>
+  </div>
+  <div class="delay-row" style="margin-top:8px;">
+    <label class="delay-label"><input type="checkbox" id="rpmEnabled"> 全局 RPM 限速</label>
+    <input type="number" id="globalRpm" value="20" min="1" max="10000" class="rpm-input" placeholder="RPM"> 请求/分钟
+    <span style="color:var(--text3);">· 各模型可单独覆盖</span>
+  </div>
+  <div class="status-bar" id="statusBar" style="display:none;">
+    <div class="dot" id="statusDot"></div>
+    <span id="statusText"></span>
+  </div>
+  <div class="progress-bar-wrap" id="progressWrap" style="display:none;">
+    <div class="progress-bar" id="progressBar" style="width:0%"></div>
+  </div>
+</div>
+
+<div id="resultsArea" class="results"></div>
 </div>
 
 <script>
-// ================= 原有配置 (保持不变) ===================
-const SERVERS = { /* 原有全部配置，省略重复内容保持简洁，实际继承原逻辑 */ 
-  ollama: { label: 'Ollama', defaultUrl: 'http://localhost:11434', needsKey: false, hint: '本地服务 · 默认端口 <code>11434</code>', modelsPath: '/api/tags', modelsExtract: d => (d.models || []).map(m => m.name || m.model).filter(Boolean), completionPath: '/api/chat', buildBody: (model, messages, stream) => ({ model, messages, stream }), parseChunk: chunk => { try { const o = JSON.parse(chunk); return o.message?.content || ''; } catch { return ''; } }, isDone: chunk => { try { return JSON.parse(chunk).done === true; } catch { return false; } }, streamFormat: 'ndjson' },
-  lmstudio: { label: 'LM Studio', defaultUrl: 'http://localhost:1234', needsKey: false, hint: '本地服务，默认端口1234', modelsPath: '/v1/models', modelsExtract: d => (d.data || []).map(m => m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, temperature: 0.7, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
-  llamacpp: { label: 'llama.cpp', defaultUrl: 'http://localhost:8080', needsKey: false, hint: '本地服务', modelsPath: '/v1/models', modelsExtract: d => (d.data || []).map(m => m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, temperature: 0.7, max_predict: 2048 }), parseChunk: null, streamFormat: 'sse' },
-  jan: { label: 'Jan', defaultUrl: 'http://localhost:1337', needsKey: false, hint: '本地服务', modelsPath: '/v1/models', modelsExtract: d => (d.data || []).map(m => m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, temperature: 0.7, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
-  lmstudio_legacy: { label: 'LM Studio (旧版)', defaultUrl: 'http://localhost:1234', needsKey: false, hint: '旧版api', modelsPath: '/v1/models', modelsExtract: d => (Array.isArray(d) ? d.map(m => m.id || m) : (d.data || []).map(m => m.id)).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, temperature: 0.7, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
-  openai: { label: 'OpenAI', defaultUrl: 'https://api.openai.com', needsKey: true, hint: '在线服务', modelsPath: '/v1/models', modelsExtract: d => (d.data || []).map(m => m.id).filter(m => m.startsWith('gpt')), completionPath: '/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
-  groq: { label: 'Groq', defaultUrl: 'https://api.groq.com', needsKey: true, hint: '在线服务', modelsPath: '/openai/v1/models', modelsExtract: d => (d.data || []).map(m => m.id), completionPath: '/openai/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
-  together: { label: 'Together AI', defaultUrl: 'https://api.together.xyz', needsKey: true, hint: '在线服务', modelsPath: '/v1/models', modelsExtract: d => (d.data || []).map(m => m.id), completionPath: '/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
-  openrouter: { label: 'OpenRouter', defaultUrl: 'https://openrouter.ai', needsKey: true, hint: '在线服务', modelsPath: '/api/v1/models', modelsExtract: d => (d.data || []).map(m => m.id), completionPath: '/api/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
-  deepseek: { label: 'DeepSeek', defaultUrl: 'https://api.deepseek.com', needsKey: true, hint: '在线服务', modelsPath: '/v1/models', modelsExtract: d => (d.data || []).map(m => m.id), completionPath: '/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
-  anthropic_compat: { label: 'Anthropic (via proxy)', defaultUrl: 'https://your-proxy.example.com', needsKey: true, hint: '代理', modelsPath: '/v1/models', modelsExtract: d => (d.data || []).map(m => m.id), completionPath: '/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
-  litellm: { label: 'LiteLLM', defaultUrl: 'http://localhost:4000', needsKey: true, hint: '本地/自托管服务 · 默认端口 <code>4000</code> · 统一代理 OpenAI、Claude、Gemini 等 100+ 模型', modelsPath: '/v1/models', modelsExtract: d => (d.data || []).map(m => m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
-  custom: { label: '自定义', defaultUrl: 'http://localhost:8000', needsKey: false, hint: '自定义端点', modelsPath: '/v1/models', modelsExtract: d => (d.data || []).map(m => m.id), completionPath: '/v1/chat/completions', buildBody: (model, messages, stream) => ({ model, messages, stream, max_tokens: 2048 }), parseChunk: null, streamFormat: 'sse' },
+// =================== Server profiles ===================
+const SERVERS = {
+  ollama:          { label: 'Ollama',              defaultUrl: 'http://localhost:11434',               needsKey: false,      hint: '本地服务 · 默认端口 <code>11434</code>', modelsPath: '/api/tags',        modelsExtract: d => (d.models||[]).map(m=>m.name||m.model).filter(Boolean), completionPath: '/api/chat',            buildBody: (model,messages,stream) => ({model,messages,stream}), parseChunk: chunk => { try{const o=JSON.parse(chunk);return o.message?.content||'';}catch{return '';} }, isDone: chunk => { try{return JSON.parse(chunk).done===true;}catch{return false;} }, streamFormat: 'ndjson' },
+  lmstudio:        { label: 'LM Studio',           defaultUrl: 'http://localhost:1234',                needsKey: false,      hint: '本地服务 · 默认端口 <code>1234</code>', modelsPath: '/v1/models',       modelsExtract: d => (d.data||[]).map(m=>m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model,messages,stream) => ({model,messages,stream,temperature:0.7,max_tokens:2048}), parseChunk: null, streamFormat: 'sse' },
+  llamacpp:        { label: 'llama.cpp',            defaultUrl: 'http://localhost:8080',                needsKey: false,      hint: '本地服务 · 默认端口 <code>8080</code>', modelsPath: '/v1/models',       modelsExtract: d => (d.data||[]).map(m=>m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model,messages,stream) => ({model,messages,stream,temperature:0.7,max_predict:2048}), parseChunk: null, streamFormat: 'sse' },
+  jan:             { label: 'Jan',                  defaultUrl: 'http://localhost:1337',                needsKey: false,      hint: '本地服务 · 默认端口 <code>1337</code>', modelsPath: '/v1/models',       modelsExtract: d => (d.data||[]).map(m=>m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model,messages,stream) => ({model,messages,stream,temperature:0.7,max_tokens:2048}), parseChunk: null, streamFormat: 'sse' },
+  litellm:         { label: 'LiteLLM',              defaultUrl: 'http://localhost:4000',                needsKey: 'optional', hint: '本地/自托管 · 默认端口 <code>4000</code> · 统一代理 OpenAI、Claude、Gemini 等 100+ 模型', modelsPath: '/v1/models', modelsExtract: d => (d.data||[]).map(m=>m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model,messages,stream) => ({model,messages,stream,max_tokens:2048}), parseChunk: null, streamFormat: 'sse' },
+  lmstudio_legacy: { label: 'LM Studio (旧版)',     defaultUrl: 'http://localhost:1234',                needsKey: false,      hint: '旧版 API（&lt;0.2.17）', modelsPath: '/v1/models', modelsExtract: d => (Array.isArray(d)?d.map(m=>m.id||m):(d.data||[]).map(m=>m.id)).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model,messages,stream) => ({model,messages,stream,temperature:0.7,max_tokens:2048}), parseChunk: null, streamFormat: 'sse' },
+  openai:          { label: 'OpenAI',               defaultUrl: 'https://api.openai.com',               needsKey: true,       hint: '在线服务 · <a href="https://platform.openai.com/api-keys" target="_blank">获取 API Key</a> · 视觉模型支持图片', modelsPath: '/v1/models', modelsExtract: d => (d.data||[]).map(m=>m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model,messages,stream) => ({model,messages,stream,max_tokens:2048}), parseChunk: null, streamFormat: 'sse' },
+  nvidia:          { label: 'NVIDIA NIM',           defaultUrl: 'https://integrate.api.nvidia.com',     needsKey: true,       hint: '在线服务 · <a href="https://build.nvidia.com" target="_blank">获取 API Key</a> · 前缀 <code>nvapi-</code>', modelsPath: '/v1/models', modelsExtract: d => (d.data||[]).map(m=>m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model,messages,stream) => ({model,messages,stream,max_tokens:2048}), parseChunk: null, streamFormat: 'sse' },
+  anthropic_compat:{ label: 'Anthropic (via proxy)',defaultUrl: 'https://your-proxy.example.com',       needsKey: 'optional', hint: '需通过 OpenAI 兼容代理访问，直接请求官方端点会有 CORS 限制', modelsPath: '/v1/models', modelsExtract: d => (d.data||[]).map(m=>m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model,messages,stream) => ({model,messages,stream,max_tokens:2048}), parseChunk: null, streamFormat: 'sse' },
+  google_compat:   { label: 'Google Gemini (proxy)',defaultUrl: 'https://your-proxy.example.com',       needsKey: 'optional', hint: '需通过 OpenAI 兼容代理访问 Google Gemini', modelsPath: '/v1/models', modelsExtract: d => (d.data||[]).map(m=>m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model,messages,stream) => ({model,messages,stream,max_tokens:2048}), parseChunk: null, streamFormat: 'sse' },
+  groq:            { label: 'Groq',                 defaultUrl: 'https://api.groq.com',                 needsKey: true,       hint: '在线服务 · <a href="https://console.groq.com/keys" target="_blank">获取 API Key</a>', modelsPath: '/openai/v1/models', modelsExtract: d => (d.data||[]).map(m=>m.id).filter(Boolean), completionPath: '/openai/v1/chat/completions', buildBody: (model,messages,stream) => ({model,messages,stream,max_tokens:2048}), parseChunk: null, streamFormat: 'sse' },
+  mistral:         { label: 'Mistral',              defaultUrl: 'https://api.mistral.ai',               needsKey: true,       hint: '在线服务 · <a href="https://console.mistral.ai/api-keys" target="_blank">获取 API Key</a>', modelsPath: '/v1/models', modelsExtract: d => (d.data||[]).map(m=>m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model,messages,stream) => ({model,messages,stream,max_tokens:2048}), parseChunk: null, streamFormat: 'sse' },
+  together:        { label: 'Together AI',          defaultUrl: 'https://api.together.xyz',             needsKey: true,       hint: '在线服务 · <a href="https://api.together.ai/settings/api-keys" target="_blank">获取 API Key</a>', modelsPath: '/v1/models', modelsExtract: d => (d.data||[]).map(m=>m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model,messages,stream) => ({model,messages,stream,max_tokens:2048}), parseChunk: null, streamFormat: 'sse' },
+  openrouter:      { label: 'OpenRouter',           defaultUrl: 'https://openrouter.ai',                needsKey: true,       hint: '在线服务 · <a href="https://openrouter.ai/keys" target="_blank">获取 API Key</a> · 支持多模态模型', modelsPath: '/api/v1/models', modelsExtract: d => (d.data||[]).map(m=>m.id).filter(Boolean), completionPath: '/api/v1/chat/completions', buildBody: (model,messages,stream) => ({model,messages,stream,max_tokens:2048}), parseChunk: null, streamFormat: 'sse' },
+  deepseek:        { label: 'DeepSeek',             defaultUrl: 'https://api.deepseek.com',             needsKey: true,       hint: '在线服务 · <a href="https://platform.deepseek.com/api_keys" target="_blank">获取 API Key</a>', modelsPath: '/v1/models', modelsExtract: d => (d.data||[]).map(m=>m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model,messages,stream) => ({model,messages,stream,max_tokens:2048}), parseChunk: null, streamFormat: 'sse' },
+  siliconflow:     { label: 'SiliconFlow',          defaultUrl: 'https://api.siliconflow.cn',           needsKey: true,       hint: '在线服务 · <a href="https://cloud.siliconflow.cn/account/ak" target="_blank">获取 API Key</a> · 国内可直连', modelsPath: '/v1/models', modelsExtract: d => (d.data||[]).map(m=>m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model,messages,stream) => ({model,messages,stream,max_tokens:2048}), parseChunk: null, streamFormat: 'sse' },
+  zhipu:           { label: '智谱 GLM',             defaultUrl: 'https://open.bigmodel.cn/api/paas/v4', needsKey: true,       hint: '在线服务 · <a href="https://open.bigmodel.cn/usercenter/apikeys" target="_blank">获取 API Key</a>', modelsPath: '/models', modelsExtract: d => (d.data||[]).map(m=>m.id).filter(Boolean), completionPath: '/chat/completions', buildBody: (model,messages,stream) => ({model,messages,stream,max_tokens:2048}), parseChunk: null, streamFormat: 'sse' },
+  custom:          { label: '自定义',               defaultUrl: 'http://localhost:8000',                needsKey: 'optional', hint: '自定义 OpenAI 兼容端点 · API Key 可留空', modelsPath: '/v1/models', modelsExtract: d => (d.data||[]).map(m=>m.id).filter(Boolean), completionPath: '/v1/chat/completions', buildBody: (model,messages,stream) => ({model,messages,stream,max_tokens:2048}), parseChunk: null, streamFormat: 'sse' },
 };
 
-function getCtxMode() { return document.querySelector('input[name=ctxMode]:checked')?.value || 'window'; }
-function getCtxWindow() { return Math.max(1, parseInt(document.getElementById('ctxWindowSize').value) || 3); }
-function buildMessages(history, mode, windowSize) { if (mode === 'none') return [history[history.length-1]]; if (mode === 'window') { const keep = windowSize * 2 + 1; return history.slice(-keep); } return [...history]; }
+// =================== Line numbers ===================
+const questionsEl = document.getElementById('questions');
+const lineNumbersEl = document.getElementById('lineNumbers');
+function updateLineNumbers() {
+  const lines = questionsEl.value.split('\n');
+  lineNumbersEl.textContent = lines.map((_,i) => i).join('\n');
+  lineNumbersEl.scrollTop = questionsEl.scrollTop;
+}
+questionsEl.addEventListener('input', updateLineNumbers);
+questionsEl.addEventListener('scroll', () => { lineNumbersEl.scrollTop = questionsEl.scrollTop; });
+updateLineNumbers();
 
-let models = [];
-let selectedModels = new Set();
-let results = {};
-let isTesting = false;
-let testAbortFlag = false;        // 停止标志
-let currentAbortController = null; // 用于立即中止当前 fetch
-let skipModelFlag = false;         // 跳过当前模型，继续下一个
-let currentTestLoopPromise = null; // 用于中途停止
-let pendingQueueModels = [];       // 动态待测模型列表 (已排序)
-let processedModelsSet = new Set(); // 已完成或正在测试的模型，避免重复添加
-let activeModelIndex = 0;          // 当前正在执行第几个模型
+// =================== Attachment state ===================
+let attachments = [], uploadCounter = 0;
+function effectiveLabel(att) { return att.label.trim() !== '' ? att.label.trim() : String(att.uploadOrder); }
+function isNumericLabel(label) { return /^\d+$/.test(label.trim()); }
+function fileToBase64(file) {
+  return new Promise((res,rej) => { const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=()=>rej(new Error('读取失败')); r.readAsDataURL(file); });
+}
+function formatSize(bytes) { if(bytes<1024)return bytes+'B'; if(bytes<1024*1024)return(bytes/1024).toFixed(1)+'KB'; return(bytes/1024/1024).toFixed(1)+'MB'; }
+function getFileIcon(mimeType, name) {
+  if(mimeType&&mimeType.startsWith('audio/')) return '🎵';
+  const ext=(name||'').split('.').pop().toLowerCase();
+  return {pdf:'📕',txt:'📝',md:'📝',csv:'📊',json:'📋',doc:'📘',docx:'📘',xlsx:'📊',pptx:'📙'}[ext]||'📄';
+}
 
-// DOM 元素
-const serverTypeEl = document.getElementById('serverType');
-const serverUrlEl = document.getElementById('serverUrl');
-const apiKeyRowEl = document.getElementById('apiKeyRow');
-const serverHintEl = document.getElementById('serverHint');
-const fetchBtn = document.getElementById('fetchBtn');
-const startBtn = document.getElementById('startBtn');
-const stopTestBtn = document.getElementById('stopTestBtn');
-const addToQueueBtn = document.getElementById('addToQueueBtn');
-const dlBtn = document.getElementById('dlBtn');
-const resultsArea = document.getElementById('resultsArea');
+async function addAttachment(file, type) {
+  const maxSizes = { image:20*1024*1024, audio:25*1024*1024, file:32*1024*1024 };
+  if(file.size>maxSizes[type]){alert(`"${file.name}" 超出大小限制 (${formatSize(maxSizes[type])})`);return;}
+  const id = ++uploadCounter;
+  const previewUrl = type==='image' ? URL.createObjectURL(file) : null;
+  const att = { id, uploadOrder:id-1, type, file, name:file.name, size:file.size, mimeType:file.type, base64:null, label:'', previewUrl };
+  attachments.push(att);
+  fileToBase64(file).then(b64=>{ att.base64=b64; }).catch(console.error);
+  renderAttachments(); updateAttachSummary();
+}
+function removeAttachment(id) {
+  const att=attachments.find(a=>a.id===id); if(att?.previewUrl) URL.revokeObjectURL(att.previewUrl);
+  attachments=attachments.filter(a=>a.id!==id);
+  attachments.forEach((a,i)=>{a.uploadOrder=i;});
+  renderAttachments(); updateAttachSummary();
+}
+function renderAttachments() {
+  const listIds={image:'imagesList',audio:'audiosList',file:'filesList'};
+  ['image','audio','file'].forEach(type => {
+    const list=document.getElementById(listIds[type]); list.innerHTML='';
+    attachments.filter(a=>a.type===type).forEach(att => {
+      const item=document.createElement('div'); item.className='attachment-item';
+      const previewHtml=(type==='image'&&att.previewUrl)
+        ?`<img class="attachment-preview" src="${att.previewUrl}" alt="${escapeHtml(att.name)}" />`
+        :`<div class="attachment-preview icon-preview">${getFileIcon(att.mimeType,att.name)}</div>`;
+      const previewLinkHtml=att.previewUrl?`<a class="attachment-preview-link" href="${att.previewUrl}" target="_blank">预览</a>`:'';
+      const autoNumNote=att.label.trim()===''?`<span class="attachment-autonum">自动 #${att.uploadOrder}</span>`:'';
+      item.innerHTML=`${previewHtml}<div class="attachment-info"><div class="attachment-name-row"><span class="attachment-name" title="${escapeHtml(att.name)}">${escapeHtml(att.name)}</span>${autoNumNote}${previewLinkHtml}</div><div class="attachment-meta">${att.mimeType||'file'} · ${formatSize(att.size)}</div><div class="attachment-label-row"><span class="attachment-label-hint">标记：</span><input class="attachment-label-input" type="text" placeholder="行号/标签词（空=自动）" value="${escapeHtml(att.label)}" data-id="${att.id}" /></div></div><button class="remove-attach-btn" data-id="${att.id}">✕</button>`;
+      item.querySelector('.attachment-label-input').addEventListener('input',e=>{const f=attachments.find(a=>a.id===parseInt(e.target.getAttribute('data-id')));if(f){f.label=e.target.value;renderAttachments();}});
+      item.querySelector('.remove-attach-btn').addEventListener('click',e=>{removeAttachment(parseInt(e.target.getAttribute('data-id')));});
+      list.appendChild(item);
+    });
+  });
+}
+function updateAttachSummary() {
+  const badge=document.getElementById('attachSummary');
+  if(!attachments.length){badge.style.display='none';return;}
+  const parts=[];
+  const imgs=attachments.filter(a=>a.type==='image').length;
+  const auds=attachments.filter(a=>a.type==='audio').length;
+  const fils=attachments.filter(a=>a.type==='file').length;
+  if(imgs)parts.push(imgs+' 张图'); if(auds)parts.push(auds+' 个音频'); if(fils)parts.push(fils+' 个文件');
+  badge.textContent=parts.join(' · '); badge.style.display='inline-flex';
+}
+function setupDropZone(zoneId,inputId,type) {
+  const zone=document.getElementById(zoneId), input=document.getElementById(inputId);
+  zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag-over');});
+  zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over'));
+  zone.addEventListener('drop',async e=>{e.preventDefault();zone.classList.remove('drag-over');for(const f of e.dataTransfer.files)await addAttachment(f,type);});
+  input.addEventListener('change',async()=>{for(const f of input.files)await addAttachment(f,type);input.value='';});
+}
+setupDropZone('imageDropZone','imageInput','image');
+setupDropZone('audioDropZone','audioInput','audio');
+setupDropZone('fileDropZone','fileInput','file');
+document.querySelectorAll('.attach-tab').forEach(tab=>{
+  tab.addEventListener('click',e=>{
+    if(e.target.classList.contains('attach-type-cb'))return;
+    document.querySelectorAll('.attach-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.attach-panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-'+tab.dataset.tab).classList.add('active');
+  });
+});
+document.querySelectorAll('.attach-type-cb').forEach(cb=>{
+  cb.addEventListener('change',e=>{e.stopPropagation();updateAttachSummary();});
+  cb.addEventListener('click',e=>e.stopPropagation());
+});
+function isTypeEnabled(type) {
+  const map={image:'enableImages',audio:'enableAudio',file:'enableFiles'};
+  const el=document.getElementById(map[type]); return el?el.checked:false;
+}
+
+// =================== Attachment matching ===================
+function resolveAttachments(lineNum, questionText) {
+  if(!attachments.length) return [];
+  const eligible=attachments.filter(a=>isTypeEnabled(a.type));
+  if(!eligible.length) return [];
+  const seen=new Set(), result=[];
+  function add(att,rule){if(!seen.has(att.id)){seen.add(att.id);result.push({att,rule});}}
+  for(const att of eligible){const lbl=effectiveLabel(att);if(isNumericLabel(lbl)&&parseInt(lbl)===lineNum)add(att,'numeric');}
+  for(const att of eligible){const lbl=effectiveLabel(att);if(!isNumericLabel(lbl)){const escaped=lbl.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');const re=new RegExp(escaped,'i');if(re.test(questionText))add(att,'word');}}
+  for(const att of eligible){if(questionText.includes(att.name))add(att,'filename');}
+  if(result.length===0){const fallback=eligible.find(a=>a.uploadOrder===lineNum);if(fallback)add(fallback,'fallback');}
+  return result;
+}
+
+async function buildUserContent(questionText, matchedAtts) {
+  if(!matchedAtts||!matchedAtts.length) return questionText;
+  const parts=[];
+  for(const{att}of matchedAtts){
+    if(!att.base64){try{att.base64=await fileToBase64(att.file);}catch(e){continue;}}
+    if(att.type==='image'){parts.push({type:'image_url',image_url:{url:`data:${att.mimeType||'image/jpeg'};base64,${att.base64}`,detail:'auto'}});}
+    else if(att.type==='audio'){const fmt=(att.mimeType||'audio/mp3').split('/')[1]?.replace('mpeg','mp3')||'mp3';parts.push({type:'input_audio',input_audio:{data:att.base64,format:fmt}});}
+    else{const mime=att.mimeType||'application/octet-stream';if(mime.includes('pdf')){parts.push({type:'document',source:{type:'base64',media_type:mime,data:att.base64}});}else{try{const decoded=decodeURIComponent(escape(atob(att.base64)));parts.push({type:'text',text:`[文件: ${att.name}]\n\`\`\`\n${decoded.slice(0,8000)}\n\`\`\``});}catch{parts.push({type:'text',text:`[文件: ${att.name}，类型: ${mime}，大小: ${formatSize(att.size)}]`});}}}
+  }
+  parts.push({type:'text',text:questionText}); return parts;
+}
+function buildAttachPreviewHtml(matchedAtts) {
+  if(!matchedAtts||!matchedAtts.length) return '';
+  const ruleLabel={numeric:'行号',word:'标记词',filename:'文件名',fallback:'兜底'};
+  const chips=matchedAtts.map(({att,rule})=>{
+    const thumb=(att.type==='image'&&att.previewUrl)?`<img class="q-attach-thumb" src="${att.previewUrl}" alt="" />`:getFileIcon(att.mimeType,att.name);
+    return `<span class="q-attach-chip">${thumb} ${escapeHtml(att.name)} <span class="match-rule">[${ruleLabel[rule]}]</span></span>`;
+  }).join('');
+  return `<div class="q-attachments">${chips}</div>`;
+}
+
+// =================== Core state ===================
+function getCtxMode() { return document.querySelector('input[name=ctxMode]:checked')?.value||'window'; }
+function getCtxWindow() { return Math.max(1,parseInt(document.getElementById('ctxWindowSize').value)||3); }
+function buildMessages(history,mode,windowSize) {
+  if(mode==='none') return [history[history.length-1]];
+  if(mode==='window'){const keep=windowSize*2+1;return history.slice(-keep);}
+  return [...history];
+}
+
+let models=[], selectedModels=new Set(), results={};
+let isTesting=false, testAbortFlag=false, skipModelFlag=false;
+let currentAbortController=null;
+let pendingQueueModels=[], processedModelsSet=new Set(), activeModelIndex=0;
+
+const serverTypeEl=document.getElementById('serverType');
+const serverUrlEl=document.getElementById('serverUrl');
+const apiKeyRowEl=document.getElementById('apiKeyRow');
+const serverHintEl=document.getElementById('serverHint');
+const fetchBtn=document.getElementById('fetchBtn');
+const startBtn=document.getElementById('startBtn');
+const stopTestBtn=document.getElementById('stopTestBtn');
+const addToQueueBtn=document.getElementById('addToQueueBtn');
+const dlBtn=document.getElementById('dlBtn');
+const resultsArea=document.getElementById('resultsArea');
 
 function applyServerProfile(type) {
-  const p = SERVERS[type];
-  if(p) { serverUrlEl.value = p.defaultUrl; apiKeyRowEl.style.display = p.needsKey ? 'flex' : 'none'; serverHintEl.innerHTML = p.hint; }
+  const p=SERVERS[type]; if(!p) return;
+  serverUrlEl.value=p.defaultUrl; serverHintEl.innerHTML=p.hint;
+  if(p.needsKey===true){ apiKeyRowEl.style.display='flex'; document.getElementById('apiKeyLabel').textContent='API Key'; }
+  else if(p.needsKey==='optional'){ apiKeyRowEl.style.display='flex'; document.getElementById('apiKeyLabel').textContent='API Key（可选）'; }
+  else { apiKeyRowEl.style.display='none'; }
 }
-serverTypeEl.addEventListener('change', () => applyServerProfile(serverTypeEl.value));
+serverTypeEl.addEventListener('change',()=>applyServerProfile(serverTypeEl.value));
 applyServerProfile(serverTypeEl.value);
 
-function getHeaders() { const key = document.getElementById('apiKey').value.trim(); const h = { 'Content-Type': 'application/json' }; if(key) h['Authorization'] = `Bearer ${key}`; return h; }
+function getHeaders() { const key=document.getElementById('apiKey').value.trim(); const h={'Content-Type':'application/json'}; if(key)h['Authorization']=`Bearer ${key}`; return h; }
 
 async function fetchModels() {
-  const type = serverTypeEl.value, profile = SERVERS[type], base = serverUrlEl.value.trim().replace(/\/$/, '');
-  const errEl = document.getElementById('fetchError'); errEl.style.display = 'none';
-  fetchBtn.disabled = true; fetchBtn.textContent = '获取中...';
+  const type=serverTypeEl.value, profile=SERVERS[type], base=serverUrlEl.value.trim().replace(/\/$/,'');
+  const errEl=document.getElementById('fetchError'); errEl.style.display='none';
+  fetchBtn.disabled=true; fetchBtn.textContent='获取中...';
   try {
-    const res = await fetch(`${base}${profile.modelsPath}`, { headers: getHeaders() });
+    const res=await fetch(`${base}${profile.modelsPath}`,{headers:getHeaders()});
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    models = profile.modelsExtract(data);
+    const data=await res.json();
+    models=profile.modelsExtract(data);
     if(!models.length) throw new Error('无可用模型');
     renderModels();
-    document.getElementById('modelCount').textContent = `(${models.length} 个)`;
-  } catch(e) { errEl.textContent = `连接失败: ${e.message}`; errEl.style.display = 'block'; }
-  finally { fetchBtn.disabled = false; fetchBtn.textContent = '获取模型 →'; }
+    document.getElementById('modelCount').textContent=`(${models.length} 个)`;
+  } catch(e){errEl.textContent=`连接失败: ${e.message}`;errEl.style.display='block';}
+  finally{fetchBtn.disabled=false;fetchBtn.textContent='获取模型 →';}
 }
 
 function renderModels() {
-  const grid = document.getElementById('modelsGrid');
-  grid.innerHTML = '';
-  models.forEach(m => {
-    const label = document.createElement('label'); label.className = 'model-item' + (selectedModels.has(m) ? ' selected' : '');
-    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = selectedModels.has(m);
-    const span = document.createElement('span'); span.className = 'model-name'; span.textContent = m;
+  const grid=document.getElementById('modelsGrid'); grid.innerHTML='';
+  models.forEach(m=>{
+    const label=document.createElement('label'); label.className='model-item'+(selectedModels.has(m)?' selected':'');
+    const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=selectedModels.has(m);
+    const span=document.createElement('span'); span.className='model-name'; span.textContent=m;
     label.appendChild(cb); label.appendChild(span);
-    cb.onchange = () => { if(cb.checked) selectedModels.add(m); else selectedModels.delete(m); label.className = 'model-item' + (selectedModels.has(m) ? ' selected' : ''); updateStartBtn(); };
-    label.onclick = (e) => { if(e.target !== cb) { e.preventDefault(); cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); } };
+    cb.onchange=()=>{if(cb.checked)selectedModels.add(m);else selectedModels.delete(m);label.className='model-item'+(selectedModels.has(m)?' selected':'');updateStartBtn();};
+    label.onclick=e=>{if(e.target!==cb){e.preventDefault();cb.checked=!cb.checked;cb.dispatchEvent(new Event('change'));}};
     grid.appendChild(label);
   });
   updateStartBtn();
 }
 
 function updateStartBtn() {
-  const qs = document.getElementById('questions').value.trim().split('\n').filter(l=>l.trim());
-  startBtn.disabled = !selectedModels.size || !qs.length || isTesting;
+  const qs=questionsEl.value.trim().split('\n').filter(l=>l.trim());
+  startBtn.disabled=!selectedModels.size||!qs.length||isTesting;
 }
+questionsEl.addEventListener('input',updateStartBtn);
 
-document.getElementById('questions').addEventListener('input', updateStartBtn);
+async function* readSSE(reader){const dec=new TextDecoder();let buf='';while(true){const{done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop();for(const line of lines){const t=line.trim();if(!t||t==='data: [DONE]')continue;if(t.startsWith('data: '))yield t.slice(6);}}}
+async function* readNDJSON(reader){const dec=new TextDecoder();let buf='';while(true){const{done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop();for(const line of lines)if(line.trim())yield line.trim();}}
 
-// ---------- 核心增强: 队列管理 & 停止测试 ----------
-async function* readSSE(reader) { const dec = new TextDecoder(); let buf=''; while(true) { const {done,value}=await reader.read(); if(done)break; buf+=dec.decode(value,{stream:true}); const lines=buf.split('\n'); buf=lines.pop(); for(const line of lines){ const t=line.trim(); if(!t||t==='data: [DONE]')continue; if(t.startsWith('data: ')) yield t.slice(6); } } }
-async function* readNDJSON(reader) { const dec = new TextDecoder(); let buf=''; while(true){ const {done,value}=await reader.read(); if(done)break; buf+=dec.decode(value,{stream:true}); const lines=buf.split('\n'); buf=lines.pop(); for(const line of lines) if(line.trim()) yield line.trim(); } }
+async function runSingleModel(model,lines,profile,base,ctxMode,ctxWindow,cardElem,keyId,statEl) {
+  const qaBox=cardElem.querySelector('.model-result-body'); if(!qaBox) return;
+  const history=[]; let totalTime=0; let totalDelay=0;
 
-async function runSingleModel(model, lines, profile, base, ctxMode, ctxWindow, cardElem, keyId, statEl, modelIndex) {
-  const qaBox = cardElem.querySelector(`.model-result-body`);
-  if(!qaBox) return false;
-  const history = [];
-  let totalTime = 0;
-  for(let i=0; i<lines.length; i++) {
+  for(let lineNum=0;lineNum<lines.length;lineNum++){
     if(testAbortFlag) throw new Error('测试已停止');
-    if(skipModelFlag) throw new DOMException('跳过模型', 'AbortError');
-    const q = lines[i].trim();
-    document.getElementById('statusText').innerText = `[${model}] 第 ${i+1}/${lines.length} 题 (队列中剩余 ${pendingQueueModels.length - modelIndex -1} 个模型待测)`;
-    const qaDiv = document.createElement('div'); qaDiv.className = 'qa-item';
-    qaDiv.innerHTML = `<div class="q-label">问题 ${i+1}</div><div class="q-text">${escapeHtml(q)}</div><div class="a-label">回答</div><div class="a-line pending" id="ans-${keyId}-${i}">等待回答...</div><div class="time-tag" id="time-${keyId}-${i}"></div>`;
-    qaBox.appendChild(qaDiv);
-    const t0 = Date.now();
-    let answer = '';
-    const ansEl = document.getElementById(`ans-${keyId}-${i}`);
-    try {
-      history.push({ role: 'user', content: q });
-      const msgSlice = buildMessages(history, ctxMode, ctxWindow);
-      const body = profile.buildBody(model, msgSlice, true);
-      currentAbortController = new AbortController();
-      const resp = await fetch(`${base}${profile.completionPath}`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(body), signal: currentAbortController.signal });
-      if(!resp.ok) { const txt = await resp.text(); throw new Error(`HTTP ${resp.status}: ${txt.slice(0,100)}`); }
-      ansEl.className = 'a-line'; ansEl.textContent = '';
-      const reader = resp.body.getReader();
-      if(profile.streamFormat === 'ndjson') {
-        for await (const chunk of readNDJSON(reader)) {
-          if(testAbortFlag) break;
-          if(profile.isDone && profile.isDone(chunk)) break;
-          const delta = profile.parseChunk(chunk);
-          if(delta) { answer += delta; ansEl.textContent = answer; }
+    if(skipModelFlag) throw new DOMException('跳过','AbortError');
+
+    // ---- RPM dynamic pre-question delay ----
+    const rpm = getEffectiveRpm(model);
+    if(rpm > 0 && lineNum > 0) {
+      // Target: after completing (lineNum) questions, total elapsed = lineNum * (60/rpm)
+      // elapsed so far = totalTime + totalDelay
+      // required elapsed before sending question lineNum = lineNum * (60/rpm)
+      const targetElapsed = lineNum * (60 / rpm);
+      const actualElapsed = totalTime + totalDelay;
+      const needDelay = targetElapsed - actualElapsed;
+      if(needDelay > 0.05) {
+        const delayMs = Math.round(needDelay * 1000);
+        // Show countdown
+        const rpmDelayEl = document.createElement('div');
+        rpmDelayEl.className = 'rpm-delay-tag';
+        rpmDelayEl.id = `rpm-wait-${keyId}-${lineNum}`;
+        // Append to previous qa-item if exists
+        const prevQa = qaBox.lastElementChild;
+        if(prevQa) prevQa.appendChild(rpmDelayEl);
+        const deadlineMs = Date.now() + delayMs;
+        const interval = setInterval(() => {
+          if(testAbortFlag||skipModelFlag){clearInterval(interval);return;}
+          const rem = ((deadlineMs - Date.now())/1000);
+          if(rem > 0) rpmDelayEl.textContent = `⏳ RPM限速等待 ${rem.toFixed(1)}s`;
+          else {rpmDelayEl.textContent=''; clearInterval(interval);}
+        }, 100);
+        // Wait in 100ms slices so abort/skip works
+        const slices = Math.ceil(delayMs / 100);
+        for(let s=0;s<slices;s++){
+          if(testAbortFlag) {clearInterval(interval); throw new Error('测试已停止');}
+          if(skipModelFlag) {clearInterval(interval); throw new DOMException('跳过','AbortError');}
+          await new Promise(r=>setTimeout(r,Math.min(100,delayMs-s*100)));
         }
-      } else {
-        for await (const chunk of readSSE(reader)) {
-          if(testAbortFlag) break;
-          try { const obj = JSON.parse(chunk); const delta = obj.choices?.[0]?.delta?.content; if(delta) { answer += delta; ansEl.textContent = answer; } } catch(e) {}
-        }
+        clearInterval(interval);
+        const actualDelay = needDelay;
+        totalDelay += actualDelay;
+        if(prevQa) {const el=prevQa.querySelector(`#rpm-wait-${keyId}-${lineNum}`);if(el) el.textContent=`⏳ RPM等待 ${actualDelay.toFixed(2)}s`;}
       }
-      const elapsed = ((Date.now() - t0)/1000).toFixed(2);
-      document.getElementById(`time-${keyId}-${i}`).innerText = `耗时 ${elapsed}s`;
-      totalTime += parseFloat(elapsed);
-      results[model].questions.push(q); results[model].answers.push(answer); results[model].times.push(elapsed);
-      history.push({ role: 'assistant', content: answer });
-    } catch(qErr) {
-      // 停止/跳过信号：向上抛出，不在这里处理
-      if(testAbortFlag || qErr.name === 'AbortError') throw qErr;
-      // 单题报错：标记该题失败，继续下一题
-      const elapsed = ((Date.now() - t0)/1000).toFixed(2);
-      ansEl.className = 'a-line error';
-      ansEl.textContent = `⚠️ 出错: ${qErr.message}`;
-      document.getElementById(`time-${keyId}-${i}`).innerText = `耗时 ${elapsed}s`;
-      results[model].questions.push(q); results[model].answers.push(`[错误] ${qErr.message}`); results[model].times.push(elapsed);
-      // 上下文中移除失败的这轮，避免污染后续问题
-      if(history[history.length-1]?.role === 'user') history.pop();
+    }
+
+    const q=lines[lineNum].trim();
+    document.getElementById('statusText').innerText=`[${model}] 行 ${lineNum}/${lines.length-1} · 队列剩余 ${pendingQueueModels.length-activeModelIndex-1} 个`+(rpm>0?` · RPM ${rpm}`:'');
+    const matchedAtts=resolveAttachments(lineNum,q);
+    const qaDiv=document.createElement('div'); qaDiv.className='qa-item';
+    qaDiv.innerHTML=`<div class="q-label"><span class="q-linenum">${lineNum}</span>问题</div>${buildAttachPreviewHtml(matchedAtts)}<div class="q-text">${escapeHtml(q)}</div><div class="a-label">回答</div><div class="a-line pending" id="ans-${keyId}-${lineNum}">等待回答...</div><div class="time-tag" id="time-${keyId}-${lineNum}"></div>`;
+    qaBox.appendChild(qaDiv);
+    const t0=Date.now(); let answer='';
+    const ansEl=document.getElementById(`ans-${keyId}-${lineNum}`);
+    try {
+      const msgContent=await buildUserContent(q,matchedAtts);
+      history.push({role:'user',content:msgContent});
+      const msgSlice=buildMessages(history,ctxMode,ctxWindow);
+      const body=profile.buildBody(model,msgSlice,true);
+      // 429 auto-retry with exponential backoff
+      let resp, retryCount=0;
+      while(true){
+        if(testAbortFlag) throw new Error('测试已停止');
+        if(skipModelFlag) throw new DOMException('跳过','AbortError');
+        currentAbortController=new AbortController();
+        resp=await fetch(`${base}${profile.completionPath}`,{method:'POST',headers:getHeaders(),body:JSON.stringify(body),signal:currentAbortController.signal});
+        if(resp.status===429){
+          retryCount++;
+          // Try to read Retry-After header; fallback to exponential backoff
+          const retryAfterHdr=resp.headers.get('Retry-After');
+          let waitSec=retryAfterHdr?parseFloat(retryAfterHdr):Math.min(4*Math.pow(2,retryCount-1),120);
+          waitSec=Math.max(waitSec,2);
+          // Show countdown on the answer element
+          ansEl.className='a-line pending';
+          const backoffEl=document.createElement('span');
+          backoffEl.className='rpm-delay-tag';
+          ansEl.after(backoffEl);
+          for(let rem=waitSec;rem>0;rem-=0.2){
+            if(testAbortFlag||skipModelFlag){backoffEl.remove();break;}
+            backoffEl.textContent=`⚡ 429 限速，${retryCount}次重试，等待 ${rem.toFixed(1)}s…`;
+            await new Promise(r=>setTimeout(r,200));
+          }
+          backoffEl.remove();
+          // Also add to totalDelay so RPM accounting stays correct
+          totalDelay+=waitSec;
+          continue;
+        }
+        if(!resp.ok){const txt=await resp.text();throw new Error(`HTTP ${resp.status}: ${txt.slice(0,120)}`);}
+        break;
+      }
+      ansEl.className='a-line'; ansEl.textContent='';
+      const reader=resp.body.getReader();
+      if(profile.streamFormat==='ndjson'){
+        for await(const chunk of readNDJSON(reader)){if(testAbortFlag)break;if(profile.isDone&&profile.isDone(chunk))break;const delta=profile.parseChunk(chunk);if(delta){answer+=delta;ansEl.textContent=answer;}}
+      } else {
+        for await(const chunk of readSSE(reader)){if(testAbortFlag)break;try{const obj=JSON.parse(chunk);const delta=obj.choices?.[0]?.delta?.content;if(delta){answer+=delta;ansEl.textContent=answer;}}catch(e){}}
+      }
+      const elapsed=parseFloat(((Date.now()-t0)/1000).toFixed(2));
+      const timeTag=document.getElementById(`time-${keyId}-${lineNum}`);
+      timeTag.innerText=`⏱ ${elapsed}s`;
+      totalTime+=elapsed;
+      // Show RPM info on time tag if active
+      if(rpm>0){
+        const avgInterval=(60/rpm);
+        const used=totalTime+totalDelay;
+        const ideal=(lineNum+1)*avgInterval;
+        const diff=used-ideal;
+        const rpmInfo=diff<-0.5?` · 快 ${Math.abs(diff).toFixed(1)}s`:(diff>0.5?` · 慢 ${diff.toFixed(1)}s`:'');
+        if(rpmInfo) timeTag.innerText+=rpmInfo;
+      }
+      results[model].questions.push(q); results[model].answers.push(answer); results[model].times.push(elapsed.toFixed(2)); results[model].attachCounts.push(matchedAtts.length);
+      history.push({role:'assistant',content:answer});
+    } catch(qErr){
+      if(testAbortFlag||qErr.name==='AbortError') throw qErr;
+      const elapsed=parseFloat(((Date.now()-t0)/1000).toFixed(2));
+      ansEl.className='a-line error'; ansEl.textContent=`⚠️ 出错: ${qErr.message}`;
+      document.getElementById(`time-${keyId}-${lineNum}`).innerText=`⏱ ${elapsed}s`;
+      results[model].questions.push(q); results[model].answers.push(`[错误] ${qErr.message}`); results[model].times.push(elapsed.toFixed(2)); results[model].attachCounts.push(0);
+      totalTime+=elapsed;
+      if(history[history.length-1]?.role==='user') history.pop();
     }
   }
-  const errCount = results[model].answers.filter(a => a.startsWith('[错误]')).length;
-  const errNote = errCount > 0 ? ` · ⚠️ ${errCount} 题出错` : '';
-  statEl.innerText = `${lines.length} 题 · 总耗时 ${totalTime.toFixed(1)}s${errNote}`;
-  return true;
+  const errCount=results[model].answers.filter(a=>a.startsWith('[错误]')).length;
+  const rpm=getEffectiveRpm(model);
+  const rpmNote=rpm>0?` · ⏱限速${rpm}rpm·等待${totalDelay.toFixed(1)}s`:'';
+  statEl.innerText=`${lines.length} 题 · ${totalTime.toFixed(1)}s`+(errCount?` · ⚠️ ${errCount} 错`:'')+rpmNote;
+}
+
+// per-model RPM map: model name -> custom RPM (or null = use global)
+const modelRpmMap = new Map();
+
+function makeModelCard(model,open) {
+  const key=safeDomId(model);
+  const card=document.createElement('div'); card.className='model-result'+(open?' open':'');
+  card.setAttribute('data-model',model);
+  card.innerHTML=`<div class="model-result-header"><div class="header-left"><span class="arrow">&#9660;</span><span class="result-model-name">${escapeHtml(model)}</span><span class="model-rpm-wrap" title="该模型 RPM 上限（空=使用全局值）">RPM<input class="model-rpm-input" id="rpm-${key}" type="number" min="1" max="10000" placeholder="全局" /></span></div><div class="result-stat"><span id="stat-${key}">排队中...</span><button class="skip-model-btn" id="skip-${key}" data-model="${escapeHtml(model)}">⏭ 跳过</button><button class="delete-queue-btn" data-model="${escapeHtml(model)}">✖</button></div></div><div class="model-result-body" id="qa-${key}"></div>`;
+  // Stop click from toggling collapse when interacting with rpm input
+  const rpmInput = card.querySelector(`#rpm-${key}`);
+  rpmInput.addEventListener('click', e => e.stopPropagation());
+  rpmInput.addEventListener('input', e => {
+    e.stopPropagation();
+    const val = parseInt(rpmInput.value);
+    if (val > 0) modelRpmMap.set(model, val);
+    else modelRpmMap.delete(model);
+  });
+  // Pre-fill if already set
+  if (modelRpmMap.has(model)) rpmInput.value = modelRpmMap.get(model);
+  card.querySelector('.model-result-header').addEventListener('click', e => {
+    if (e.target.tagName === 'INPUT') return;
+    card.classList.toggle('open');
+  });
+  return card;
+}
+
+function getEffectiveRpm(model) {
+  // Returns RPM limit for a model, or 0 if disabled
+  const rpmEnabled = document.getElementById('rpmEnabled').checked;
+  if (!rpmEnabled) return 0;
+  const modelVal = modelRpmMap.get(model);
+  if (modelVal && modelVal > 0) return modelVal;
+  const globalVal = parseInt(document.getElementById('globalRpm').value) || 0;
+  return globalVal;
 }
 
 async function startTest() {
   if(isTesting) return;
-  const type = serverTypeEl.value, profile = SERVERS[type], base = serverUrlEl.value.trim().replace(/\/$/, '');
-  const lines = document.getElementById('questions').value.trim().split('\n').filter(l=>l.trim());
+  const type=serverTypeEl.value, profile=SERVERS[type], base=serverUrlEl.value.trim().replace(/\/$/,'');
+  const lines=questionsEl.value.trim().split('\n').filter(l=>l.trim());
   if(!lines.length) return;
-  const ctxMode = getCtxMode(), ctxWindow = getCtxWindow();
-  // 收集初始选中的模型
-  let initialSelected = [...selectedModels];
-  if(initialSelected.length === 0) return;
-  pendingQueueModels = [...initialSelected];
-  processedModelsSet.clear();
-  results = {};
-  testAbortFlag = false;
-  isTesting = true;
-  
-  // UI 显示停止按钮、加入队列按钮等
-  stopTestBtn.style.display = 'inline-block';
-  addToQueueBtn.style.display = 'inline-block';
-  startBtn.disabled = true;
-  dlBtn.style.display = 'none';
-  document.getElementById('statusBar').style.display = 'flex';
-  document.getElementById('progressWrap').style.display = 'block';
-  document.getElementById('statusDot').className = 'dot running';
-  
-  resultsArea.innerHTML = '';
-  const toolbar = document.createElement('div'); toolbar.className = 'toolbar-row';
-  toolbar.innerHTML = `<div class="toolbar-left"><button id="expandAllBtn">全部展开</button><button id="collapseAllBtn">全部折叠</button></div><div class="toolbar-right"><span style="font-size:11px;color:#78716c;">✖ 删除未开始模型</span></div>`;
+  const ctxMode=getCtxMode(), ctxWindow=getCtxWindow();
+  const initialSelected=[...selectedModels]; if(!initialSelected.length) return;
+  pendingQueueModels=[...initialSelected]; processedModelsSet.clear(); results={}; modelRpmMap.clear();
+  testAbortFlag=false; isTesting=true;
+  stopTestBtn.style.display='inline-block'; addToQueueBtn.style.display='inline-block';
+  startBtn.disabled=true; dlBtn.style.display='none';
+  document.getElementById('statusBar').style.display='flex';
+  document.getElementById('progressWrap').style.display='block';
+  document.getElementById('statusDot').className='dot running';
+  resultsArea.innerHTML='';
+  const toolbar=document.createElement('div'); toolbar.className='toolbar-row';
+  toolbar.innerHTML=`<div class="toolbar-left"><button id="expandAllBtn">全部展开</button><button id="collapseAllBtn">全部折叠</button></div><div class="toolbar-right"><span style="font-size:11px;color:var(--text3);">✖ 移除未开始的模型</span></div>`;
   resultsArea.appendChild(toolbar);
   document.getElementById('expandAllBtn')?.addEventListener('click',()=>setAllOpen(true));
   document.getElementById('collapseAllBtn')?.addEventListener('click',()=>setAllOpen(false));
-  
-  // 预创建所有卡片（队列模型）
-  const cardMap = new Map();
-  for(let idx=0; idx<pendingQueueModels.length; idx++) {
-    const model = pendingQueueModels[idx];
-    results[model] = { questions: [], answers: [], times: [] };
-    const key = safeDomId(model);
-    const card = document.createElement('div'); card.className = 'model-result' + (idx===0?' open':'');
-    card.setAttribute('data-model', model);
-    card.innerHTML = `
-      <div class="model-result-header">
-        <div class="header-left"><span class="arrow">&#9660;</span><span class="result-model-name">${escapeHtml(model)}</span></div>
-        <div class="result-stat"><span id="stat-${key}">排队中...</span><button class="skip-model-btn" id="skip-${key}" data-model="${escapeHtml(model)}">⏭ 跳过</button><button class="delete-queue-btn" data-model="${escapeHtml(model)}">✖ 移除</button></div>
-      </div>
-      <div class="model-result-body" id="qa-${key}"></div>`;
-    card.querySelector('.model-result-header').addEventListener('click',()=>card.classList.toggle('open'));
-    resultsArea.appendChild(card);
-    cardMap.set(model, card);
+  const cardMap=new Map();
+  for(let idx=0;idx<pendingQueueModels.length;idx++){
+    const model=pendingQueueModels[idx];
+    results[model]={questions:[],answers:[],times:[],attachCounts:[]};
+    const card=makeModelCard(model,idx===0);
+    resultsArea.appendChild(card); cardMap.set(model,card);
   }
-  
-  let completedCount = 0;
-  const totalModels = pendingQueueModels.length;
-  for(let idx=0; idx<pendingQueueModels.length && !testAbortFlag; idx++) {
-    activeModelIndex = idx;
-    const model = pendingQueueModels[idx];
+  let completedCount=0; const totalModels=pendingQueueModels.length;
+  for(let idx=0;idx<pendingQueueModels.length&&!testAbortFlag;idx++){
+    activeModelIndex=idx;
+    const model=pendingQueueModels[idx];
     if(processedModelsSet.has(model)) continue;
     processedModelsSet.add(model);
-    const card = cardMap.get(model);
-    if(!card) continue;
-    const key = safeDomId(model);
-    const statSpan = card.querySelector(`#stat-${key}`);
-    if(statSpan) statSpan.innerText = '测试中...';
-    // 删除按钮暂时不可用防止误删
-    const delBtn = card.querySelector('.delete-queue-btn');
-    if(delBtn) delBtn.disabled = true;
-    // 显示跳过按钮
-    skipModelFlag = false;
-    const skipBtn = card.querySelector(`#skip-${key}`);
-    if(skipBtn) skipBtn.style.display = 'inline-block';
+    const card=cardMap.get(model); if(!card) continue;
+    const key=safeDomId(model);
+    const statSpan=card.querySelector(`#stat-${key}`);
+    if(statSpan) statSpan.innerText='测试中...';
+    const delBtnEl=card.querySelector('.delete-queue-btn'); if(delBtnEl) delBtnEl.disabled=true;
+    skipModelFlag=false;
+    const skipBtn=card.querySelector(`#skip-${key}`); if(skipBtn) skipBtn.style.display='inline-block';
     try {
-      await runSingleModel(model, lines, profile, base, ctxMode, ctxWindow, card, key, statSpan, idx);
-    } catch(err) {
-      if(testAbortFlag || (err.name === 'AbortError' && !skipModelFlag)) { statSpan.innerText = '已停止'; card.classList.add('canceled'); testAbortFlag = true; }
-      else if(err.name === 'AbortError' && skipModelFlag) { statSpan.innerText = `已跳过 (${results[model]?.questions?.length || 0} 题)`; card.classList.add('canceled'); }
-      else { statSpan.innerText = `错误: ${err.message.slice(0,40)}`; }
+      await runSingleModel(model,lines,profile,base,ctxMode,ctxWindow,card,key,statSpan);
+    } catch(err){
+      if(testAbortFlag||(err.name==='AbortError'&&!skipModelFlag)){if(statSpan)statSpan.innerText='已停止';card.classList.add('canceled');testAbortFlag=true;}
+      else if(err.name==='AbortError'){if(statSpan)statSpan.innerText=`已跳过 (${results[model]?.questions?.length||0} 题)`;card.classList.add('canceled');}
+      else{if(statSpan)statSpan.innerText=`错误: ${err.message.slice(0,40)}`;}
     }
-    if(skipBtn) skipBtn.style.display = 'none';
-    skipModelFlag = false;
-    completedCount++;
-    const progressPercent = (completedCount / totalModels) * 100;
-    document.getElementById('progressBar').style.width = `${progressPercent}%`;
-    if(delBtn) delBtn.disabled = false;
-
-    // 模型间延时（最后一个模型不等待）
-    const isLast = idx >= pendingQueueModels.length - 1;
-    const delayEnabled = document.getElementById('delayEnabled').checked;
-    const delaySec = parseInt(document.getElementById('delaySeconds').value) || 0;
-    if(!testAbortFlag && !isLast && delayEnabled && delaySec > 0) {
-      for(let remaining = delaySec; remaining > 0 && !testAbortFlag; remaining--) {
-        document.getElementById('statusText').innerText = `等待下一个模型... ${remaining}s（点击停止可跳过）`;
-        await new Promise(r => setTimeout(r, 1000));
-      }
+    if(skipBtn) skipBtn.style.display='none';
+    skipModelFlag=false; completedCount++;
+    document.getElementById('progressBar').style.width=`${(completedCount/totalModels)*100}%`;
+    if(delBtnEl) delBtnEl.disabled=false;
+    const isLast=idx>=pendingQueueModels.length-1;
+    const delayEnabled=document.getElementById('delayEnabled').checked;
+    const delaySec=parseInt(document.getElementById('delaySeconds').value)||0;
+    if(!testAbortFlag&&!isLast&&delayEnabled&&delaySec>0){
+      for(let rem=delaySec;rem>0&&!testAbortFlag;rem--){document.getElementById('statusText').innerText=`等待下一个模型... ${rem}s（点停止可跳过）`;await new Promise(r=>setTimeout(r,1000));}
     }
   }
-  isTesting = false;
-  stopTestBtn.style.display = 'none';
-  addToQueueBtn.style.display = 'none';
-  document.getElementById('statusDot').className = 'dot done';
-  document.getElementById('statusText').innerText = testAbortFlag ? '测试已停止' : `测试完成 — ${processedModelsSet.size} 个模型 · ${lines.length} 道题`;
-  startBtn.disabled = false;
-  if(!testAbortFlag) dlBtn.style.display = 'inline-block';
-  else dlBtn.style.display = 'none';
-  testAbortFlag = false;
+  isTesting=false;
+  stopTestBtn.style.display='none'; addToQueueBtn.style.display='none';
+  document.getElementById('statusDot').className='dot done';
+  document.getElementById('statusText').innerText=testAbortFlag?'测试已停止':`测试完成 — ${processedModelsSet.size} 个模型 · ${lines.length} 道题`;
+  startBtn.disabled=false;
+  dlBtn.style.display=testAbortFlag?'none':'inline-block';
+  testAbortFlag=false;
 }
 
-function stopTest() {
-  if(isTesting) {
-    testAbortFlag = true;
-    if(currentAbortController) currentAbortController.abort();
-    document.getElementById('statusText').innerText = '正在停止...';
-  }
-}
+function stopTest() { if(isTesting){testAbortFlag=true;if(currentAbortController)currentAbortController.abort();document.getElementById('statusText').innerText='正在停止...';} }
 
-// 加入测试列表: 将当前选中的模型添加到待测队列（未开始或正在测试时都可以动态添加）
 function addToQueue() {
   if(!isTesting) return;
-  const newModels = [...selectedModels].filter(m => !processedModelsSet.has(m) && !pendingQueueModels.includes(m));
-  if(newModels.length === 0) { alert('所选模型已在队列中或已完成测试'); return; }
-  for(const m of newModels) {
+  const newModels=[...selectedModels].filter(m=>!processedModelsSet.has(m)&&!pendingQueueModels.includes(m));
+  if(!newModels.length){alert('所选模型已在队列中或已完成测试');return;}
+  for(const m of newModels){
     pendingQueueModels.push(m);
-    results[m] = { questions: [], answers: [], times: [] };
-    const key = safeDomId(m);
-    const card = document.createElement('div'); card.className = 'model-result';
-    card.setAttribute('data-model', m);
-    card.innerHTML = `
-      <div class="model-result-header">
-        <div class="header-left"><span class="arrow">&#9660;</span><span class="result-model-name">${escapeHtml(m)}</span></div>
-        <div class="result-stat"><span id="stat-${key}">排队中...</span><button class="skip-model-btn" id="skip-${key}" data-model="${escapeHtml(m)}">⏭ 跳过</button><button class="delete-queue-btn" data-model="${escapeHtml(m)}">✖ 移除</button></div>
-      </div>
-      <div class="model-result-body" id="qa-${key}"></div>`;
-    card.querySelector('.model-result-header').addEventListener('click',()=>card.classList.toggle('open'));
+    results[m]={questions:[],answers:[],times:[],attachCounts:[]};
+    const card=makeModelCard(m,false);
     resultsArea.appendChild(card);
   }
-  // 更新全局计数组件
-  const totalNew = pendingQueueModels.length;
-  document.getElementById('progressBar').style.maxWidth = '100%';
 }
 
-// 删除排队中的模型 (未开始的)
 function removePendingModel(modelName) {
   if(!isTesting) return;
-  const idx = pendingQueueModels.indexOf(modelName);
-  if(idx !== -1 && idx > activeModelIndex) {  // 仅允许删除尚未开始或排队中的
-    pendingQueueModels.splice(idx, 1);
-    const card = document.querySelector(`.model-result[data-model="${CSS.escape(modelName)}"]`);
+  const idx=pendingQueueModels.indexOf(modelName);
+  if(idx!==-1&&idx>activeModelIndex){
+    pendingQueueModels.splice(idx,1);
+    const card=document.querySelector(`.model-result[data-model="${CSS.escape(modelName)}"]`);
     if(card) card.remove();
     delete results[modelName];
-  } else {
-    alert('该模型已经开始测试或已完成，无法删除');
-  }
+  } else { alert('该模型已经开始测试或已完成，无法删除'); }
 }
 
-// 事件委托处理删除/跳过按钮
-resultsArea.addEventListener('click', (e) => {
-  // 跳过当前模型
-  const skipBtn = e.target.closest('.skip-model-btn');
-  if(skipBtn && isTesting) {
-    e.stopPropagation();
-    skipModelFlag = true;
-    if(currentAbortController) currentAbortController.abort();
-    return;
-  }
-  const btn = e.target.closest('.delete-queue-btn');
-  if(btn && isTesting) {
-    e.stopPropagation();
-    const model = btn.getAttribute('data-model');
-    if(model) removePendingModel(model);
-  }
+resultsArea.addEventListener('click',e=>{
+  const skipBtn=e.target.closest('.skip-model-btn');
+  if(skipBtn&&isTesting){e.stopPropagation();skipModelFlag=true;if(currentAbortController)currentAbortController.abort();return;}
+  const btn=e.target.closest('.delete-queue-btn');
+  if(btn&&isTesting){e.stopPropagation();const model=btn.getAttribute('data-model');if(model)removePendingModel(model);}
 });
 
-function setAllOpen(open) { document.querySelectorAll('.model-result').forEach(c => { if(open) c.classList.add('open'); else c.classList.remove('open'); }); }
-function safeDomId(s) { return btoa(encodeURIComponent(s)).replace(/[^a-zA-Z0-9]/g,''); }
-function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function setAllOpen(open){document.querySelectorAll('.model-result').forEach(c=>{if(open)c.classList.add('open');else c.classList.remove('open');});}
+function safeDomId(s){return btoa(encodeURIComponent(s)).replace(/[^a-zA-Z0-9]/g,'');}
+function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 function downloadResults() {
-  const type = serverTypeEl.value, profile = SERVERS[type];
-  const out = [`LLM 测试报告`, `时间: ${new Date().toLocaleString()}`, `服务: ${profile.label}`, `地址: ${serverUrlEl.value}`];
-  out.push(`模型: ${Object.keys(results).join(', ')}`, '='.repeat(60));
-  for (const [model, data] of Object.entries(results)) {
+  const type=serverTypeEl.value, profile=SERVERS[type];
+  const attSummary=attachments.length?'\n附件:\n'+attachments.map(a=>`  #${a.uploadOrder} ${a.name} [标记: ${effectiveLabel(a)}]`).join('\n'):'';
+  const out=[`LLM 多模态基准测试报告`,`时间: ${new Date().toLocaleString()}`,`服务: ${profile.label}`,`地址: ${serverUrlEl.value}`,`模型: ${Object.keys(results).join(', ')}`,attSummary,'='.repeat(60)];
+  for(const[model,data]of Object.entries(results)){
     out.push(`\n=== 模型: ${model} ===`);
-    for(let i=0; i<data.questions.length; i++) {
-      out.push(`【题目 ${i+1}】${data.questions[i]}`, `【回答】(${data.times[i]}s)\n${data.answers[i]}`, '-'.repeat(40));
+    for(let i=0;i<data.questions.length;i++){
+      const attNote=data.attachCounts[i]?` [📎 ${data.attachCounts[i]} 个附件]`:'';
+      out.push(`【行 ${i}】${data.questions[i]}${attNote}`,`【回答】(${data.times[i]}s)\n${data.answers[i]}`,'-'.repeat(40));
     }
   }
-  const blob = new Blob([out.join('\n')], {type:'text/plain'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `bench-${Date.now()}.txt`; a.click(); URL.revokeObjectURL(a.href);
+  const blob=new Blob([out.join('\n')],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`bench-${Date.now()}.txt`;a.click();URL.revokeObjectURL(a.href);
 }
 
-fetchBtn.addEventListener('click', fetchModels);
-startBtn.addEventListener('click', startTest);
-stopTestBtn.addEventListener('click', stopTest);
-addToQueueBtn.addEventListener('click', addToQueue);
-dlBtn.addEventListener('click', downloadResults);
+// =================== Theme switcher ===================
+(function(){
+  const root=document.documentElement;
+  const saved=localStorage.getItem('llm-bench-theme')||'dark';
+  root.setAttribute('data-theme',saved);
+  document.querySelectorAll('[data-theme-btn]').forEach(btn=>{
+    btn.classList.toggle('active',btn.getAttribute('data-theme-btn')===saved);
+    btn.addEventListener('click',()=>{
+      const theme=btn.getAttribute('data-theme-btn');
+      root.setAttribute('data-theme',theme);
+      localStorage.setItem('llm-bench-theme',theme);
+      document.querySelectorAll('[data-theme-btn]').forEach(b=>b.classList.toggle('active',b===btn));
+    });
+  });
+})();
+
+fetchBtn.addEventListener('click',fetchModels);
+startBtn.addEventListener('click',startTest);
+stopTestBtn.addEventListener('click',stopTest);
+addToQueueBtn.addEventListener('click',addToQueue);
+dlBtn.addEventListener('click',downloadResults);
 updateStartBtn();
-function updateCtxHint() { const mode=getCtxMode(); const hint=document.getElementById('ctxHint'); const wrap=document.getElementById('ctxWindowSizeWrap'); if(mode==='window'){const n=getCtxWindow(); hint.innerText=`每道题携带前 ${n} 轮问答`; wrap.style.display='flex';} else { wrap.style.display='none'; if(mode==='none')hint.innerText='每题独立'; else hint.innerText='完整上下文'; } }
+
+function updateCtxHint(){
+  const mode=getCtxMode(),hint=document.getElementById('ctxHint'),wrap=document.getElementById('ctxWindowSizeWrap');
+  if(mode==='window'){hint.innerText=`每道题携带前 ${getCtxWindow()} 轮问答`;wrap.style.display='flex';}
+  else{wrap.style.display='none';hint.innerText=mode==='none'?'每题独立，无历史':'发送全部历史（慎用，可能超出上下文限制）';}
+}
 document.querySelectorAll('input[name=ctxMode]').forEach(r=>r.addEventListener('change',updateCtxHint));
 document.getElementById('ctxWindowSize').addEventListener('input',updateCtxHint);
 updateCtxHint();
