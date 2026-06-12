@@ -105,7 +105,7 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
 .questions-wrap { position: relative; display: flex; border: 1px solid var(--border2); border-radius: 6px; overflow: hidden; background: var(--surface); }
 .questions-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(74,222,128,0.12); }
 .line-numbers { font-family: var(--mono); font-size: 12px; line-height: 1.65; color: var(--text3); background: var(--surface2); padding: 8px 10px 8px 8px; text-align: right; user-select: none; min-width: 36px; border-right: 1px solid var(--border); white-space: pre; overflow: hidden; }
-#questions { border: none; border-radius: 0; box-shadow: none; flex: 1; min-height: 120px; resize: vertical; line-height: 1.65; font-family: var(--mono); font-size: 12px; padding: 8px 12px; background: transparent; }
+#questions { border: none; border-radius: 0; box-shadow: none; flex: 1; min-height: 120px; resize: vertical; line-height: 1.65; font-family: var(--mono); font-size: 12px; padding: 8px 12px; background: transparent; white-space: pre; overflow-wrap: normal; }
 #questions:focus { border: none; box-shadow: none; }
 
 /* Attachments */
@@ -329,7 +329,7 @@ button:disabled { opacity: 0.35; cursor: not-allowed; }
   <div class="label">考题列表 <span class="label-badge">每行一题 · 从第 0 行开始</span></div>
   <div class="questions-wrap">
     <div class="line-numbers" id="lineNumbers">0</div>
-    <textarea id="questions" placeholder="请输入测试题目，每行一道&#10;行号从 0 开始，可用于匹配附件&#10;例如：&#10;第0题：请描述这张图片&#10;第1题：这段音频说了什么？&#10;第2题：总结文档要点"></textarea>
+    <textarea id="questions" wrap="off" placeholder="请输入测试题目，每行一道&#10;行号从 0 开始，可用于匹配附件&#10;例如：&#10;第0题：请描述这张图片&#10;第1题：这段音频说了什么？&#10;第2题：总结文档要点"></textarea>
   </div>
 </div>
 
@@ -652,6 +652,8 @@ applyServerProfile(serverTypeEl.value);
 function getHeaders() { const key=document.getElementById('apiKey').value.trim(); const h={'Content-Type':'application/json'}; if(key)h['Authorization']=`Bearer ${key}`; return h; }
 
 async function fetchModels() {
+  selectedModels.clear();
+  updateStartBtn();
   const type=serverTypeEl.value, profile=SERVERS[type], base=serverUrlEl.value.trim().replace(/\/$/,'');
   const errEl=document.getElementById('fetchError'); errEl.style.display='none';
   fetchBtn.disabled=true; fetchBtn.textContent='获取中...';
