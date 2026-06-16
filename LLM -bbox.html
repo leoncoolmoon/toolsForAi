@@ -318,7 +318,7 @@
       <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">虚拟空间 <span id="canvasSizeLabel" style="color:var(--text)">600×450</span></span>
       <div class="spacer"></div>
       <button class="btn-sm active" id="gtBtn" onclick="toggleGroundTruth()">GT 框</button>
-      <button class="btn-sm active" id="predBtn" onclick="togglePrediction()">预测框</button>
+      <div id="predBtnsContainer" style="display:contents"></div>
       <button class="btn-sm" onclick="toggleLabels()" id="labelBtn">标签</button>
       <button class="btn-outline" onclick="redrawScene()">↺ 重绘</button>
     </div>
@@ -566,10 +566,8 @@ const COLORS = {
 const state = {
   scene: null,
   groundTruth: [],
-  predictions: [],   // { id, x,y,w,h, label, iou, matched, oob }
-  lastResults: null,
   showGT: true,
-  showPred: true,
+  visibleModels: new Set(),
   showLabels: true,
   visionEnabled: true,
   running: false
@@ -823,44 +821,55 @@ function drawOverlay() {
     });
   }
 
-  if (state.showPred && state.predictions.length) {
-    const thresh=parseFloat(document.getElementById('iouThreshold').value);
-    state.predictions.forEach(pred => {
-      const matched = pred.iou !== undefined && pred.iou >= thresh;
-      const col = pred.iou===undefined ? COLORS.pred : matched ? COLORS.pred : COLORS.miss;
-      const oob = isOOB(pred);
-      octx.save();
-      octx.strokeStyle=col; octx.lineWidth=oob?2:2.5;
-      octx.setLineDash(oob?[3,3]:[]); // dashed if OOB
-      octx.shadowColor=col; octx.shadowBlur=10;
-      octx.strokeRect(ox+pred.x+0.5, oy+pred.y+0.5, pred.w, pred.h);
+  if (state.visibleModels.size > 0 && state.allResults) {
+    const thresh = parseFloat(document.getElementById('iouThreshold').value);
 
-      if (state.showLabels) {
-        octx.setLineDash([]);
-        octx.fillStyle=col;
-        octx.font='11px JetBrains Mono,monospace';
-        const iouStr=pred.iou!==undefined?` IoU:${pred.iou.toFixed(2)}`:'';
-        const lbl=`${pred.id}${iouStr}`;
-        const lw=octx.measureText(lbl).width+8;
-        const ly=oy+pred.y+pred.h+2;
-        octx.fillRect(ox+pred.x, ly, lw, 16);
-        octx.fillStyle='var(--bg)';
-        octx.fillText(lbl, ox+pred.x+4, ly+12);
+    state.visibleModels.forEach(model => {
+      const data = state.allResults[model];
+      if (!data) return;
 
-        // label: what this box marks
-        if (pred.label) {
-          octx.font='10px Inter,sans-serif';
-          octx.fillStyle=col+'cc';
-          octx.fillText('▸ '+pred.label, ox+pred.x+4, oy+pred.y+14);
+      data.results.forEach(res => {
+        if (!res.pred) return;
+        const pred = res.pred;
+        const matched = res.matched;
+        const col = matched ? COLORS.pred : COLORS.miss;
+        const oob = pred.oob;
+
+        octx.save();
+        octx.strokeStyle = col; octx.lineWidth = oob ? 2 : 2.5;
+        octx.setLineDash(oob ? [3, 3] : []);
+        octx.shadowColor = col; octx.shadowBlur = 10;
+        octx.strokeRect(ox + pred.x + 0.5, oy + pred.y + 0.5, pred.w, pred.h);
+
+        if (state.showLabels) {
+          octx.setLineDash([]);
+          octx.fillStyle = col;
+          octx.font = '11px JetBrains Mono,monospace';
+          const iouStr = ` IoU:${pred.iou.toFixed(2)}`;
+          // If multiple models are visible, prefix label with model name
+          const modelPrefix = state.visibleModels.size > 1 ? `${model.slice(0,8)}: ` : '';
+          const lbl = `${modelPrefix}${res.gt.id}${iouStr}`;
+
+          const lw = octx.measureText(lbl).width + 8;
+          const ly = oy + pred.y + pred.h + 2;
+          octx.fillRect(ox + pred.x, ly, lw, 16);
+          octx.fillStyle = 'var(--bg)';
+          octx.fillText(lbl, ox + pred.x + 4, ly + 12);
+
+          if (pred.label) {
+            octx.font = '10px Inter,sans-serif';
+            octx.fillStyle = col + 'cc';
+            octx.fillText('▸ ' + pred.label, ox + pred.x + 4, oy + pred.y + 14);
+          }
+
+          if (oob) {
+            octx.font = 'bold 10px Inter,sans-serif';
+            octx.fillStyle = COLORS.warn;
+            octx.fillText('⚠ OOB', ox + pred.x + pred.w - 44, oy + pred.y + 14);
+          }
         }
-
-        if (oob) {
-          octx.font='bold 10px Inter,sans-serif';
-          octx.fillStyle=COLORS.warn;
-          octx.fillText('⚠ OOB', ox+pred.x+pred.w-44, oy+pred.y+14);
-        }
-      }
-      octx.restore();
+        octx.restore();
+      });
     });
   }
 }
@@ -870,8 +879,7 @@ function loadScene(name) {
   if (name==='random') SCENES.random.objects=generateRandomObjects();
   state.scene=SCENES[name];
   state.groundTruth=state.scene.objects.map(o=>({...o}));
-  state.predictions=[];
-  state.lastResults=null;
+  state.allResults=null;
   document.querySelectorAll('.scene-btn').forEach(b=>b.classList.toggle('active',b.dataset.scene===name));
   drawScene(state.scene);
   drawBoundary();
@@ -881,6 +889,10 @@ function loadScene(name) {
   setStatus('ready',`场景: ${state.scene.name}，${state.groundTruth.length} 个对象`);
 }
 
+function clearResults() {
+  document.getElementById('resultsBody').innerHTML = '';
+}
+
 function redrawScene() { if(!state.scene)return; drawScene(state.scene); drawBoundary(); drawOverlay(); }
 
 function toggleGroundTruth() {
@@ -888,10 +900,28 @@ function toggleGroundTruth() {
   document.getElementById('gtBtn').classList.toggle('active',state.showGT);
   drawOverlay();
 }
-function togglePrediction() {
-  state.showPred=!state.showPred;
-  document.getElementById('predBtn').classList.toggle('active',state.showPred);
+function togglePrediction(model) {
+  if (state.visibleModels.has(model)) {
+    state.visibleModels.delete(model);
+  } else {
+    state.visibleModels.add(model);
+  }
+  updatePredButtons();
   drawOverlay();
+}
+
+function updatePredButtons() {
+  const container = document.getElementById('predBtnsContainer');
+  container.innerHTML = '';
+  if (!state.allResults) return;
+
+  Object.keys(state.allResults).forEach(model => {
+    const btn = document.createElement('button');
+    btn.className = 'btn-sm' + (state.visibleModels.has(model) ? ' active' : '');
+    btn.textContent = `预测: ${model}`;
+    btn.onclick = () => togglePrediction(model);
+    container.appendChild(btn);
+  });
 }
 function toggleLabels() {
   state.showLabels=!state.showLabels;
@@ -905,8 +935,9 @@ function toggleVision() {
 
 // ─── Reset ────────────────────────────────────────────────────────────────
 function resetAll() {
-  state.predictions=[];
-  state.lastResults=null;
+  state.visibleModels.clear();
+  state.allResults = null;
+  updatePredButtons();
   drawOverlay();
   clearResults();
   setStatus('ready','已重置');
@@ -1043,7 +1074,6 @@ async function runBenchmark() {
   if(selectedModels.size === 0){alert('请先选择至少一个模型');return;}
 
   state.running=true;
-  state.predictions=[];
   state.allResults = {};
   document.getElementById('runBtn').disabled=true;
   document.getElementById('resultsBody').innerHTML = '';
@@ -1075,8 +1105,8 @@ async function runBenchmark() {
     document.getElementById('runBtn').disabled = false;
     const firstModel = Array.from(selectedModels)[0];
     if (state.allResults[firstModel]) {
-      state.predictions = state.allResults[firstModel].results.filter(r => r.pred).map(r => ({ ...r.pred, id: r.gt.id }));
-      state.lastResults = state.allResults[firstModel];
+      state.visibleModels.add(firstModel);
+      updatePredButtons();
       drawOverlay();
     }
   }
@@ -1103,9 +1133,6 @@ function recomputeIfDone() {
     const updated = data.results.map(r => r.pred ? { ...r, iou: computeIoU(r.gt, r.pred), matched: computeIoU(r.gt, r.pred) >= thresh } : r);
     state.allResults[model].results = updated;
     renderModelResultCard(model, updated, data.elapsed, data.rawText);
-  }
-  if (state.lastResults) {
-      state.predictions = state.lastResults.results.filter(r => r.pred).map(r => ({ ...r.pred, id: r.gt.id }));
   }
   drawOverlay();
 }
@@ -1240,8 +1267,9 @@ function renderModelResultCard(model, results, elapsed, rawText) {
 
 function showOnCanvas(model) {
   if (state.allResults && state.allResults[model]) {
-    state.predictions = state.allResults[model].results.filter(r => r.pred).map(r => ({ ...r.pred, id: r.gt.id }));
-    state.lastResults = state.allResults[model];
+    state.visibleModels.clear();
+    state.visibleModels.add(model);
+    updatePredButtons();
     drawOverlay();
     document.querySelectorAll('.model-card').forEach(c => c.style.borderColor = 'var(--accent2)');
     const modelSafeId = btoa(encodeURIComponent(model)).replace(/[^a-zA-Z0-9]/g, '');
@@ -1284,13 +1312,6 @@ function applyEdit(gtId, model) {
       return { ...r, pred: { ...newPred, iou, oob }, iou, matched: iou >= thresh, metrics: computeMetrics(r.gt, newPred) };
     });
 
-    if (state.lastResults === state.allResults[model]) {
-      const idx = state.predictions.findIndex(p => p.id === gtId);
-      const iou = computeIoU(state.groundTruth.find(g => g.id === gtId), newPred);
-      if (idx >= 0) state.predictions[idx] = { ...newPred, iou, oob };
-      else state.predictions.push({ ...newPred, iou, oob });
-      drawOverlay();
-    }
 
     document.getElementById('resultsBody').innerHTML = '';
     for (const [m, data] of Object.entries(state.allResults)) {
