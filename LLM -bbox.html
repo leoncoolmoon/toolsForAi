@@ -215,33 +215,7 @@
     <div class="panel-title">模型配置</div>
     <div class="server-card">
       <div class="server-row">
-        <select id="serverType" class="server-type-select">
-          <optgroup label="本地服务">
-            <option value="ollama">Ollama</option>
-            <option value="lmstudio" selected>LM Studio</option>
-            <option value="llamacpp">llama.cpp</option>
-            <option value="jan">Jan</option>
-            <option value="litellm">LiteLLM</option>
-            <option value="lmstudio_legacy">LM Studio (旧版 &lt;0.2.17)</option>
-          </optgroup>
-          <optgroup label="在线服务">
-            <option value="openai">OpenAI</option>
-            <option value="anthropic">Anthropic</option>
-            <option value="nvidia">NVIDIA NIM</option>
-            <option value="anthropic_compat">Anthropic (via proxy)</option>
-            <option value="google_compat">Google Gemini (via proxy)</option>
-            <option value="groq">Groq</option>
-            <option value="mistral">Mistral</option>
-            <option value="together">Together AI</option>
-            <option value="openrouter">OpenRouter</option>
-            <option value="deepseek">DeepSeek</option>
-            <option value="siliconflow">SiliconFlow</option>
-            <option value="zhipu">智谱 GLM</option>
-          </optgroup>
-          <optgroup label="自定义">
-            <option value="custom">自定义 OpenAI 兼容端点</option>
-          </optgroup>
-        </select>
+        <select id="serverType" class="server-type-select"></select>
         <input class="url-input" id="serverUrl" type="text" value="http://localhost:1234" />
         <button id="fetchBtn" style="width: 100%; margin-top: 8px;">获取模型 →</button>
       </div>
@@ -527,6 +501,7 @@ const modelsGridEl = document.getElementById("modelsGrid");
 let models = [];
 let selectedModels = new Set();
 
+renderServerSelect(serverTypeEl, 'lmstudio');
 serverTypeEl.addEventListener("change", () => applyServerProfile(serverTypeEl.value, serverUrlEl, serverHintEl, apiKeyRowEl, document.getElementById("apiKeyLabel")));
 applyServerProfile(serverTypeEl.value, serverUrlEl, serverHintEl, apiKeyRowEl, document.getElementById("apiKeyLabel"));
 
@@ -620,7 +595,7 @@ function drawBoundary() {
   bctx.fillStyle = 'rgba(255,255,255,0.05)';
   // label corners
   bctx.font = '10px JetBrains Mono, monospace';
-  bctx.fillStyle = 'rgba(255,255,255,0.18)';
+  bctx.fillStyle = getThemeColor('--text2');
   bctx.fillText('(0,0)', OFX+3, OFY-4);
   bctx.fillText(`(${CW},${CH})`, OFX+CW-52, OFY+CH+12);
   bctx.restore();
@@ -808,13 +783,14 @@ function drawOverlay() {
       octx.shadowColor=COLORS.gt; octx.shadowBlur=6;
       octx.strokeRect(ox+obj.x+0.5, oy+obj.y+0.5, obj.w, obj.h);
       if (state.showLabels) {
+        octx.shadowBlur = 0; // Disable shadow for labels
         octx.setLineDash([]);
         octx.fillStyle=COLORS.gt;
         octx.font='11px JetBrains Mono,monospace';
         const lbl='GT:'+obj.id;
         const lw=octx.measureText(lbl).width+8;
         octx.fillRect(ox+obj.x, oy+obj.y-18, lw, 16);
-        octx.fillStyle='var(--bg)';
+        octx.fillStyle=getThemeColor('--bg');
         octx.fillText(lbl, ox+obj.x+4, oy+obj.y-6);
       }
       octx.restore();
@@ -842,6 +818,7 @@ function drawOverlay() {
         octx.strokeRect(ox + pred.x + 0.5, oy + pred.y + 0.5, pred.w, pred.h);
 
         if (state.showLabels) {
+          octx.shadowBlur = 0; // Disable shadow for labels
           octx.setLineDash([]);
           octx.fillStyle = col;
           octx.font = '11px JetBrains Mono,monospace';
@@ -853,7 +830,7 @@ function drawOverlay() {
           const lw = octx.measureText(lbl).width + 8;
           const ly = oy + pred.y + pred.h + 2;
           octx.fillRect(ox + pred.x, ly, lw, 16);
-          octx.fillStyle = 'var(--bg)';
+          octx.fillStyle = getThemeColor('--bg');
           octx.fillText(lbl, ox + pred.x + 4, ly + 12);
 
           if (pred.label) {
@@ -1332,7 +1309,12 @@ function setStatus(s, text, extra='') {
 function escJs(s){return String(s).replace(/'/g,"\\'").replace(/\\/g,'\\\\');}
 
 // ─── Init ─────────────────────────────────────────────────────────────────
-initTheme();
-loadScene('letters');
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  // Ensure theme colors are resolved after DOM and styles are ready
+  setTimeout(() => {
+    loadScene('letters');
+  }, 50);
+});
 </script>
 </body></html>
