@@ -4,44 +4,33 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LLM 边界框标定测试台</title>
+<link rel="stylesheet" href="llm.css">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;500;600&display=swap');
 
   :root {
-    --bg: #0d0f14;
-    --surface: #151820;
-    --panel: #1c1f2e;
-    --border: #252a3a;
-    --accent: #4fffb0;
-    --accent2: #7c6aff;
-    --warn: #ffb347;
-    --danger: #ff5e7a;
-    --text: #e8eaf2;
-    --muted: #6b7394;
-    --mono: 'JetBrains Mono', monospace;
-    --sans: 'Inter', sans-serif;
     --radius: 8px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.6; min-height: 100vh; }
 
-  header { border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 14px; background: var(--surface); }
+  header { border-bottom: 1px solid var(--border2); padding: 12px 20px; display: flex; align-items: center; gap: 14px; background: var(--surface); }
   header .logo { font-family: var(--mono); font-weight: 600; font-size: 15px; color: var(--accent); letter-spacing: 0.03em; }
-  header .tagline { color: var(--muted); font-size: 12px; border-left: 1px solid var(--border); padding-left: 14px; }
-  header .hdr-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  header .tagline { color: var(--text3); font-size: 12px; border-left: 1px solid var(--border2); padding-left: 14px; }
+  header .hdr-actions { margin-left: auto; display: flex; gap: 12px; align-items: center; flex-wrap: nowrap; }
   .badge { background: color-mix(in srgb, var(--accent2) 15%, transparent); border: 1px solid color-mix(in srgb, var(--accent2) 40%, transparent); color: var(--accent2); font-size: 11px; font-family: var(--mono); padding: 3px 10px; border-radius: 20px; }
 
   .layout { display: grid; grid-template-columns: 300px 1fr 340px; height: calc(100vh - 49px); overflow: hidden; }
 
-  .panel { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
-  .panel-title { font-size: 10px; font-family: var(--mono); letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; padding: 12px 14px 8px; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 0; z-index: 2; }
+  .panel { background: var(--surface); border-right: 1px solid var(--border2); overflow-y: auto; display: flex; flex-direction: column; }
+  .panel-title { font-size: 10px; font-family: var(--mono); letter-spacing: 0.12em; color: var(--text3); text-transform: uppercase; padding: 12px 14px 8px; border-bottom: 1px solid var(--border2); background: var(--bg); position: sticky; top: 0; z-index: 2; }
 
-  .field-group { padding: 12px 14px; border-bottom: 1px solid var(--border); }
-  .field-label { font-size: 11px; color: var(--muted); margin-bottom: 5px; font-weight: 500; letter-spacing: 0.04em; }
-  input, select, textarea { width: 100%; background: var(--panel); border: 1px solid var(--border); color: var(--text); padding: 7px 9px; border-radius: var(--radius); font-family: var(--mono); font-size: 12px; outline: none; transition: border-color 0.15s; }
+  .field-group { padding: 12px 14px; border-bottom: 1px solid var(--border2); }
+  .field-label { font-size: 11px; color: var(--text3); margin-bottom: 5px; font-weight: 500; letter-spacing: 0.04em; }
+  input, select, textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border2); color: var(--text); padding: 7px 9px; border-radius: var(--radius); font-family: var(--mono); font-size: 12px; outline: none; transition: border-color 0.15s; }
   input:focus, select:focus, textarea:focus { border-color: var(--accent2); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent2) 15%, transparent); }
   textarea { resize: vertical; min-height: 90px; line-height: 1.55; }
-  select option { background: var(--panel); }
+  select option { background: var(--surface2); }
   .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
   button { cursor: pointer; font-family: var(--sans); font-weight: 500; border: none; border-radius: var(--radius); transition: all 0.15s; font-size: 13px; }
@@ -50,15 +39,15 @@
   .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
   .btn-reset { background: color-mix(in srgb, var(--danger) 12%, transparent); border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent); color: var(--danger); padding: 9px 18px; width: 100%; }
   .btn-reset:hover { background: color-mix(in srgb, var(--danger) 22%, transparent); }
-  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 12px; }
+  .btn-outline { background: transparent; border: 1px solid var(--border2); color: var(--text3); padding: 6px 12px; }
   .btn-outline:hover { border-color: var(--accent2); color: var(--text); }
-  .btn-sm { padding: 5px 10px; font-size: 11px; background: var(--panel); color: var(--muted); border: 1px solid var(--border); }
-  .btn-sm:hover { color: var(--text); border-color: var(--muted); }
+  .btn-sm { padding: 5px 10px; font-size: 11px; background: var(--surface2); color: var(--text3); border: 1px solid var(--border2); }
+  .btn-sm:hover { color: var(--text); border-color: var(--text3); }
   .btn-sm.active { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
 
   /* Canvas area */
   .canvas-area { background: var(--bg); display: flex; flex-direction: column; overflow: hidden; }
-  .canvas-toolbar { padding: 8px 14px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; flex-wrap: wrap; }
+  .canvas-toolbar { padding: 8px 14px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--border2); background: var(--surface); flex-shrink: 0; flex-wrap: wrap; }
   .canvas-toolbar .spacer { flex: 1; }
   .canvas-wrap { flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 20px; }
   /* Virtual viewport: clips GT canvas but shows overflow */
@@ -71,99 +60,137 @@
   .canvas-inner { position: absolute; }
 
   /* Right panel */
-  .results-panel { background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+  .results-panel { background: var(--surface); border-left: 1px solid var(--border2); display: flex; flex-direction: column; overflow: hidden; }
   .results-body { flex: 1; overflow-y: auto; padding: 10px; }
 
-  .result-card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; }
-  .result-card-head { display: flex; align-items: center; justify-content: space-between; padding: 7px 11px; border-bottom: 1px solid var(--border); background: var(--bg); }
+  .result-card { background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; }
+  .result-card-head { display: flex; align-items: center; justify-content: space-between; padding: 7px 11px; border-bottom: 1px solid var(--border2); background: var(--bg); }
   .result-label { font-size: 13px; font-weight: 600; }
   .iou-badge { font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
   .iou-good { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); }
-  .iou-mid  { background: color-mix(in srgb, var(--warn)   15%, transparent); color: var(--warn);   border: 1px solid color-mix(in srgb, var(--warn)   30%, transparent); }
+  .iou-mid  { background: color-mix(in srgb, var(--accent3)   15%, transparent); color: var(--accent3);   border: 1px solid color-mix(in srgb, var(--accent3)   30%, transparent); }
   .iou-bad  { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent); }
-  .result-card-body { padding: 9px 11px; }
+  .result-card-body { padding: 9px 11px; background: var(--surface); }
 
   .bbox-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
   .bbox-col { font-size: 11px; }
-  .bbox-col .col-title { color: var(--muted); margin-bottom: 3px; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .bbox-col .col-title { color: var(--text3); margin-bottom: 3px; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
   .bbox-val { font-family: var(--mono); color: var(--text); }
 
   /* Editable pred fields */
   .pred-edit { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px; }
   .pred-edit input { padding: 4px 6px; font-size: 11px; height: 26px; }
-  .pred-edit-label { font-size: 9px; color: var(--muted); text-align: center; margin-top: 1px; }
+  .pred-edit-label { font-size: 9px; color: var(--text3); text-align: center; margin-top: 1px; }
   .btn-apply { width: 100%; margin-top: 5px; font-size: 11px; padding: 4px; background: color-mix(in srgb, var(--accent2) 12%, transparent); border: 1px solid color-mix(in srgb, var(--accent2) 35%, transparent); color: var(--accent2); border-radius: 4px; }
   .btn-apply:hover { background: color-mix(in srgb, var(--accent2) 22%, transparent); }
 
   .stats-row { display: flex; gap: 6px; margin-bottom: 6px; }
-  .stat-item { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 5px 6px; text-align: center; }
+  .stat-item { flex: 1; background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; padding: 5px 6px; text-align: center; }
   .stat-item .sv { font-family: var(--mono); font-size: 12px; font-weight: 600; }
-  .stat-item .sk { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 1px; }
+  .stat-item .sk { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 1px; }
 
   .score-bar-wrap { margin-top: 5px; }
-  .score-bar-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-bottom: 2px; }
-  .score-bar-bg { background: var(--border); height: 4px; border-radius: 3px; overflow: hidden; }
+  .score-bar-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+  .score-bar-bg { background: var(--border2); height: 4px; border-radius: 3px; overflow: hidden; }
   .score-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
 
-  .log-box { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 10px; font-family: var(--mono); font-size: 10px; color: var(--muted); max-height: 120px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; margin-top: 6px; }
+  .log-box { background: var(--bg); border: 1px solid var(--border2); border-radius: var(--radius); padding: 8px 10px; font-family: var(--mono); font-size: 10px; color: var(--text3); max-height: 120px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; margin-top: 6px; }
 
-  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--muted); text-align: center; gap: 8px; }
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text3); text-align: center; gap: 8px; }
   .empty-state .icon { font-size: 30px; opacity: 0.4; }
   .empty-state p { font-size: 12px; max-width: 180px; line-height: 1.5; }
 
   .spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid color-mix(in srgb, var(--accent) 30%, transparent); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 5px; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  .status-bar { padding: 5px 12px; background: var(--bg); border-top: 1px solid var(--border); font-family: var(--mono); font-size: 10px; color: var(--muted); display: flex; gap: 14px; flex-shrink: 0; }
-  .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); margin-right: 4px; vertical-align: middle; }
+  .status-bar { padding: 5px 12px; background: var(--bg); border-top: 1px solid var(--border2); font-family: var(--mono); font-size: 10px; color: var(--text3); display: flex; gap: 14px; flex-shrink: 0; }
+  .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--text3); margin-right: 4px; vertical-align: middle; }
   .status-dot.ok   { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
-  .status-dot.busy { background: var(--warn); animation: pulse 1s infinite; }
+  .status-dot.busy { background: var(--accent3); animation: pulse 1s infinite; }
   .status-dot.err  { background: var(--danger); }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
   .scene-btns { display: flex; gap: 5px; flex-wrap: wrap; padding: 8px 14px 0; }
-  .scene-btn { font-size: 11px; padding: 4px 9px; border-radius: 4px; background: var(--panel); border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all 0.12s; }
+  .scene-btn { font-size: 11px; padding: 4px 9px; border-radius: 4px; background: var(--surface2); border: 1px solid var(--border2); color: var(--text3); cursor: pointer; transition: all 0.12s; }
   .scene-btn:hover, .scene-btn.active { border-color: var(--accent2); color: var(--text); background: color-mix(in srgb, var(--accent2) 10%, transparent); }
 
-  .section-divider { padding: 8px 14px 3px; font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; font-family: var(--mono); }
+  .section-divider { padding: 8px 14px 3px; font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; font-family: var(--mono); }
 
   .toggle-row { display: flex; align-items: center; gap: 8px; }
-  .toggle-label { font-size: 11px; color: var(--muted); flex: 1; }
-  .toggle { position: relative; width: 30px; height: 17px; background: var(--border); border-radius: 9px; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+  .toggle-label { font-size: 11px; color: var(--text3); flex: 1; }
+  .toggle { position: relative; width: 30px; height: 17px; background: var(--border2); border-radius: 9px; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
   .toggle.on { background: var(--accent2); }
   .toggle::after { content: ''; position: absolute; width: 11px; height: 11px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.2s; }
   .toggle.on::after { transform: translateX(13px); }
 
-  .hint { font-size: 10px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
+  .hint { font-size: 10px; color: var(--text3); margin-top: 3px; line-height: 1.5; }
 
-  .summary-strip { display: flex; gap: 1px; margin-bottom: 10px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
-  .summary-strip .seg { flex: 1; padding: 6px 4px; text-align: center; background: var(--panel); }
+  .summary-strip { display: flex; gap: 1px; margin-bottom: 10px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border2); }
+  .summary-strip .seg { flex: 1; padding: 6px 4px; text-align: center; background: var(--surface2); }
   .summary-strip .seg .sv { font-family: var(--mono); font-size: 14px; font-weight: 700; }
-  .summary-strip .seg .sk { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .summary-strip .seg .sk { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
   .summary-strip .seg.green .sv { color: var(--accent); }
-  .summary-strip .seg.yellow .sv { color: var(--warn); }
+  .summary-strip .seg.yellow .sv { color: var(--accent3); }
   .summary-strip .seg.red .sv { color: var(--danger); }
 
   .edit-toggle { font-size: 10px; color: var(--accent2); cursor: pointer; text-decoration: underline; }
   .edit-toggle:hover { color: var(--text); }
 
   /* Out-of-bounds warning tag */
-  .oob-tag { display: inline-block; font-size: 9px; font-family: var(--mono); padding: 1px 5px; border-radius: 3px; background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); margin-left: 6px; vertical-align: middle; }
+  .oob-tag { display: inline-block; font-size: 9px; font-family: var(--mono); padding: 1px 5px; border-radius: 3px; background: color-mix(in srgb, var(--accent3) 15%, transparent); color: var(--accent3); border: 1px solid color-mix(in srgb, var(--accent3) 35%, transparent); margin-left: 6px; vertical-align: middle; }
 
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 
   /* Prompt area with copy btn */
   .prompt-wrap { position: relative; }
-  .prompt-copy { position: absolute; top: 4px; right: 4px; font-size: 10px; padding: 2px 7px; background: var(--panel); border: 1px solid var(--border); color: var(--muted); border-radius: 4px; cursor: pointer; z-index: 1; }
+  .prompt-copy { position: absolute; top: 4px; right: 4px; font-size: 10px; padding: 2px 7px; background: var(--surface2); border: 1px solid var(--border2); color: var(--text3); border-radius: 4px; cursor: pointer; z-index: 1; }
   .prompt-copy:hover { color: var(--text); }
 
   .raw-response { font-family: var(--mono); font-size: 10px; white-space: pre-wrap; word-break: break-all; }
 
-  .pred-label-tag { font-size: 10px; color: var(--muted); font-family: var(--mono); margin-top: 4px; }
+  .pred-label-tag { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-top: 4px; }
   .pred-label-val { color: var(--accent2); font-style: italic; }
+
+  .model-card { border: 2px solid var(--accent2); margin-bottom: 20px; border-radius: var(--radius); overflow: hidden; }
+  .model-card-header { background: var(--bg); padding: 10px 14px; border-bottom: 1px solid var(--border2); display: flex; justify-content: space-between; align-items: center; }
+  .model-card-name { font-family: var(--mono); font-weight: 600; color: var(--accent2); }
+
+  /* Sidebar overrides for shared components */
+  .panel .server-card {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: var(--radius);
+    background: var(--surface2);
+  }
+  .panel .server-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .panel .server-type-select,
+  .panel .url-input,
+  .panel #fetchBtn {
+    width: 100% !important;
+    height: 32px;
+  }
+  .panel .models-grid {
+    grid-template-columns: 1fr 1fr;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 4px;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    background: var(--bg);
+  }
+  .panel .model-item {
+    padding: 4px 8px;
+  }
+  .panel .model-name {
+    font-size: 11px;
+  }
 </style>
 </head>
 <body>
@@ -172,6 +199,11 @@
   <div class="logo">⬡ BBoxBench</div>
   <div class="tagline">LLM 边界框标定能力评测工具</div>
   <div class="hdr-actions">
+    <div class="theme-switcher">
+      <button class="theme-btn active" data-theme-btn="dark">暗色</button>
+      <button class="theme-btn" data-theme-btn="light">亮色</button>
+      <button class="theme-btn" data-theme-btn="system">系统</button>
+    </div>
     <div class="badge">LiteLLM / Anthropic</div>
   </div>
 </header>
@@ -181,22 +213,49 @@
   <!-- LEFT PANEL -->
   <div class="panel">
     <div class="panel-title">模型配置</div>
-
-    <div class="field-group">
-      <div class="field-label">API 端点 (Base URL)</div>
-      <input type="text" id="baseUrl" value="https://api.anthropic.com" placeholder="http://localhost:4000">
-      <div class="hint">LiteLLM 代理地址 或 Anthropic/OpenAI 直连地址</div>
+    <div class="server-card">
+      <div class="server-row">
+        <select id="serverType" class="server-type-select">
+          <optgroup label="本地服务">
+            <option value="ollama">Ollama</option>
+            <option value="lmstudio" selected>LM Studio</option>
+            <option value="llamacpp">llama.cpp</option>
+            <option value="jan">Jan</option>
+            <option value="litellm">LiteLLM</option>
+            <option value="lmstudio_legacy">LM Studio (旧版 &lt;0.2.17)</option>
+          </optgroup>
+          <optgroup label="在线服务">
+            <option value="openai">OpenAI</option>
+            <option value="anthropic">Anthropic</option>
+            <option value="nvidia">NVIDIA NIM</option>
+            <option value="anthropic_compat">Anthropic (via proxy)</option>
+            <option value="google_compat">Google Gemini (via proxy)</option>
+            <option value="groq">Groq</option>
+            <option value="mistral">Mistral</option>
+            <option value="together">Together AI</option>
+            <option value="openrouter">OpenRouter</option>
+            <option value="deepseek">DeepSeek</option>
+            <option value="siliconflow">SiliconFlow</option>
+            <option value="zhipu">智谱 GLM</option>
+          </optgroup>
+          <optgroup label="自定义">
+            <option value="custom">自定义 OpenAI 兼容端点</option>
+          </optgroup>
+        </select>
+        <input class="url-input" id="serverUrl" type="text" value="http://localhost:1234" />
+        <button id="fetchBtn" style="width: 100%; margin-top: 8px;">获取模型 →</button>
+      </div>
+      <div class="server-row" id="apiKeyRow" style="display:none; flex-direction: column; align-items: flex-start;">
+        <span style="font-size:12px;color:var(--text2);white-space:nowrap; margin-bottom: 4px;" id="apiKeyLabel">API Key</span>
+        <input class="api-key-input" id="apiKey" type="password" placeholder="sk-..." />
+      </div>
+      <div class="hint" id="serverHint"></div>
+      <div id="fetchError" class="error-msg" style="display:none;"></div>
     </div>
 
     <div class="field-group">
-      <div class="field-label">API Key</div>
-      <input type="password" id="apiKey" placeholder="sk-...">
-    </div>
-
-    <div class="field-group">
-      <div class="field-label">模型 ID</div>
-      <input type="text" id="modelId" value="claude-sonnet-4-6" placeholder="gpt-4o / claude-3-5-sonnet / gemini...">
-      <div class="hint">LiteLLM 支持的任意模型字符串</div>
+      <div class="label">可用模型 <span id="modelCount" style="font-style:italic;font-weight:400;opacity:0.7;"></span></div>
+      <div id="modelsGrid" class="models-grid"><div class="empty-msg">请先点击「获取模型」</div></div>
     </div>
 
     <div class="field-group">
@@ -219,15 +278,14 @@
       </div>
       <div class="hint" style="margin-top:5px">关闭则仅发送文字描述，测试纯文本空间推理</div>
     </div>
-
-    <div class="section-divider">测试场景</div>
+<div class="section-divider">测试场景</div>
 
     <div class="scene-btns">
-      <div class="scene-btn" onclick="loadScene(&#39;letters&#39;)" data-scene="letters">字母 ABC</div>
-      <div class="scene-btn" onclick="loadScene(&#39;shapes&#39;)" data-scene="shapes">几何图形</div>
-      <div class="scene-btn" onclick="loadScene(&#39;emoji&#39;)" data-scene="emoji">Emoji</div>
-      <div class="scene-btn" onclick="loadScene(&#39;mixed&#39;)" data-scene="mixed">混合对象</div>
-      <div class="scene-btn active" onclick="loadScene(&#39;random&#39;)" data-scene="random">随机场景</div>
+      <div class="scene-btn" onclick="loadScene('letters')" data-scene="letters">字母 ABC</div>
+      <div class="scene-btn" onclick="loadScene('shapes')" data-scene="shapes">几何图形</div>
+      <div class="scene-btn" onclick="loadScene('emoji')" data-scene="emoji">Emoji</div>
+      <div class="scene-btn" onclick="loadScene('mixed')" data-scene="mixed">混合对象</div>
+      <div class="scene-btn active" onclick="loadScene('random')" data-scene="random">随机场景</div>
     </div>
 
     <div class="field-group" style="margin-top:8px">
@@ -243,9 +301,9 @@
     </div>
 
     <div class="field-group">
-      <div class="field-label">IoU 合格阈值</div>
+      <div class="field-label">IoU 判定阈值</div>
       <input type="range" id="iouThreshold" min="0.1" max="0.9" step="0.05" value="0.5" oninput="document.getElementById(&#39;iouVal&#39;).textContent=this.value;recomputeIfDone()" style="padding:0;border:none;background:none;accent-color:var(--accent2)">
-      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px">阈值: <span id="iouVal">0.5</span></div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:2px">阈值: <span id="iouVal">0.5</span></div>
     </div>
 
     <div class="field-group" style="display:flex;gap:8px;">
@@ -257,7 +315,7 @@
   <!-- CENTER CANVAS -->
   <div class="canvas-area">
     <div class="canvas-toolbar">
-      <span style="font-size:10px;color:var(--muted);font-family:var(--mono)">虚拟空间 <span id="canvasSizeLabel" style="color:var(--text)">600×450</span></span>
+      <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">虚拟空间 <span id="canvasSizeLabel" style="color:var(--text)">600×450</span></span>
       <div class="spacer"></div>
       <button class="btn-sm active" id="gtBtn" onclick="toggleGroundTruth()">GT 框</button>
       <button class="btn-sm active" id="predBtn" onclick="togglePrediction()">预测框</button>
@@ -275,7 +333,7 @@
     </div>
     <div class="status-bar">
       <span><span class="status-dot ok" id="statusDot"></span><span id="statusText">完成 · 0/3 通过 · 114201ms</span></span>
-      <span id="statusExtra" style="color:var(--muted)"></span>
+      <span id="statusExtra" style="color:var(--text3)"></span>
     </div>
   </div>
 
@@ -283,7 +341,7 @@
   <div class="results-panel">
     <div class="panel-title" style="display:flex;align-items:center;justify-content:space-between">
       <span>标定结果</span>
-      <span style="font-size:10px;color:var(--muted);font-weight:normal;text-transform:none;letter-spacing:0">点击数值可手动修改</span>
+      <span style="font-size:10px;color:var(--text3);font-weight:normal;text-transform:none;letter-spacing:0">点击数值可手动修改</span>
     </div>
     <div class="results-body" id="resultsBody"><div class="summary-strip">
     <div class="seg red">
@@ -293,14 +351,14 @@
       <div class="sv" style="color:var(--accent2)">0.027</div><div class="sk">平均IoU</div>
     </div>
     <div class="seg">
-      <div class="sv" style="color:var(--warn)">1</div><div class="sk">越界框</div>
+      <div class="sv" style="color:var(--accent3)">1</div><div class="sk">越界框</div>
     </div>
     <div class="seg">
-      <div class="sv" style="color:var(--muted)">114201ms</div><div class="sk">耗时</div>
+      <div class="sv" style="color:var(--text3)">114201ms</div><div class="sk">耗时</div>
     </div>
   </div><div class="result-card">
       <div class="result-card-head">
-        <div class="result-label">① <span style="color:var(--muted);font-size:11px;font-weight:400">标号①</span></div>
+        <div class="result-label">① <span style="color:var(--text3);font-size:11px;font-weight:400">标号①</span></div>
         <div class="iou-badge iou-bad">IoU 0.000</div>
       </div>
       <div class="result-card-body">
@@ -348,7 +406,7 @@
         </div>
       </details></div></div><div class="result-card">
       <div class="result-card-head">
-        <div class="result-label">② <span style="color:var(--muted);font-size:11px;font-weight:400">标号②</span></div>
+        <div class="result-label">② <span style="color:var(--text3);font-size:11px;font-weight:400">标号②</span></div>
         <div class="iou-badge iou-bad">IoU 0.081</div>
       </div>
       <div class="result-card-body">
@@ -396,7 +454,7 @@
         </div>
       </details></div></div><div class="result-card">
       <div class="result-card-head">
-        <div class="result-label">③ <span style="color:var(--muted);font-size:11px;font-weight:400">标号③</span><span class="oob-tag">OOB</span></div>
+        <div class="result-label">③ <span style="color:var(--text3);font-size:11px;font-weight:400">标号③</span><span class="oob-tag">OOB</span></div>
         <div class="iou-badge iou-bad">IoU 0.000</div>
       </div>
       <div class="result-card-body">
@@ -456,13 +514,53 @@
 
 </div>
 
+<script src="llm.js"></script>
 <script>
 // ─── Constants ────────────────────────────────────────────────────────────
+const serverTypeEl = document.getElementById("serverType");
+const serverUrlEl = document.getElementById("serverUrl");
+const apiKeyRowEl = document.getElementById("apiKeyRow");
+const serverHintEl = document.getElementById("serverHint");
+const fetchBtn = document.getElementById("fetchBtn");
+const modelsGridEl = document.getElementById("modelsGrid");
+
+let models = [];
+let selectedModels = new Set();
+
+serverTypeEl.addEventListener("change", () => applyServerProfile(serverTypeEl.value, serverUrlEl, serverHintEl, apiKeyRowEl, document.getElementById("apiKeyLabel")));
+applyServerProfile(serverTypeEl.value, serverUrlEl, serverHintEl, apiKeyRowEl, document.getElementById("apiKeyLabel"));
+
+async function fetchModelsWrapper() {
+  const type = serverTypeEl.value;
+  const url = serverUrlEl.value;
+  const key = document.getElementById("apiKey").value.trim();
+  const errEl = document.getElementById("fetchError");
+  errEl.style.display = "none";
+  fetchBtn.disabled = true; fetchBtn.textContent = "获取中...";
+  selectedModels.clear();
+  await fetchModels(type, url, key, (m) => {
+    models = m;
+    renderModelsGrid(modelsGridEl, models, selectedModels, () => {
+      document.getElementById("runBtn").disabled = selectedModels.size === 0;
+    });
+    document.getElementById("modelCount").textContent = `(${models.length} 个)`;
+  }, (e) => {
+    errEl.textContent = `连接失败: ${e.message}`;
+    errEl.style.display = "block";
+  });
+  fetchBtn.disabled = false; fetchBtn.textContent = "获取模型 →";
+}
+fetchBtn.addEventListener("click", fetchModelsWrapper);
 const CW = 600, CH = 450;
 // overflow padding so out-of-bound boxes are visible
 const OFX = 120, OFY = 80;
 
-const COLORS = { gt: '#4fffb0', pred: '#7c6aff', miss: '#ff5e7a', warn: '#ffb347' };
+const COLORS = {
+  get gt()   { return getThemeColor('--accent'); },
+  get pred() { return getThemeColor('--accent2'); },
+  get miss() { return getThemeColor('--danger'); },
+  get warn() { return getThemeColor('--accent3'); }
+};
 
 // ─── State ────────────────────────────────────────────────────────────────
 const state = {
@@ -718,7 +816,7 @@ function drawOverlay() {
         const lbl='GT:'+obj.id;
         const lw=octx.measureText(lbl).width+8;
         octx.fillRect(ox+obj.x, oy+obj.y-18, lw, 16);
-        octx.fillStyle='#0d0f14';
+        octx.fillStyle='var(--bg)';
         octx.fillText(lbl, ox+obj.x+4, oy+obj.y-6);
       }
       octx.restore();
@@ -746,7 +844,7 @@ function drawOverlay() {
         const lw=octx.measureText(lbl).width+8;
         const ly=oy+pred.y+pred.h+2;
         octx.fillRect(ox+pred.x, ly, lw, 16);
-        octx.fillStyle='#0d0f14';
+        octx.fillStyle='var(--bg)';
         octx.fillText(lbl, ox+pred.x+4, ly+12);
 
         // label: what this box marks
@@ -829,67 +927,7 @@ function buildImagePayload() {
   });
 }
 
-// ─── API Call ─────────────────────────────────────────────────────────────
-async function callLiteLLM(scene) {
-  const baseUrl=document.getElementById('baseUrl').value.trim().replace(/\/$/,'');
-  const apiKey=document.getElementById('apiKey').value.trim();
-  const model=document.getElementById('modelId').value.trim();
-  const temperature=parseFloat(document.getElementById('temperature').value);
-  const maxTokens=parseInt(document.getElementById('maxTokens').value);
-
-  if(!apiKey) throw new Error('请填写 API Key');
-  if(!model)  throw new Error('请填写模型 ID');
-
-  const userPromptText = getPrompt();
-  let userContent;
-  if (state.visionEnabled) {
-    const imgBase64=await buildImagePayload();
-    userContent=[
-      {type:'image_url', image_url:{url:`data:image/png;base64,${imgBase64}`}},
-      {type:'text', text:userPromptText}
-    ];
-  } else {
-    userContent=userPromptText;
-  }
-
-  const isAnthropic=baseUrl.includes('anthropic.com');
-  const endpoint=isAnthropic?`${baseUrl}/v1/messages`:`${baseUrl}/v1/chat/completions`;
-
-  if (isAnthropic) {
-    const anthropicBody={
-      model, max_tokens:maxTokens,
-      system: userPromptText,
-      messages:[{
-        role:'user',
-        content: state.visionEnabled
-          ? [{type:'image',source:{type:'base64',media_type:'image/png',data:await buildImagePayload()}},
-             {type:'text',text:'请标定上图中所有对象的边界框，按要求输出 JSON。'}]
-          : '请根据系统提示词中的场景描述，输出所有对象的边界框 JSON。'
-      }]
-    };
-    const resp=await fetch(endpoint,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify(anthropicBody)
-    });
-    if(!resp.ok){const e=await resp.text();throw new Error(`API ${resp.status}: ${e}`);}
-    const data=await resp.json();
-    return {raw:JSON.stringify(data,null,2), text:data.content?.[0]?.text||''};
-  }
-
-  // OpenAI / LiteLLM
-  const body={model,temperature,max_tokens:maxTokens,
-    messages:[{role:'user',content:userContent}]
-  };
-  const resp=await fetch(endpoint,{
-    method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},
-    body:JSON.stringify(body)
-  });
-  if(!resp.ok){const e=await resp.text();throw new Error(`API ${resp.status}: ${e}`);}
-  const data=await resp.json();
-  return {raw:JSON.stringify(data,null,2), text:data.choices?.[0]?.message?.content||data.content?.[0]?.text||''};
-}
+// ─── API Call (deprecated local, now using callModel below) ───────────────
 
 // ─── Parsing ──────────────────────────────────────────────────────────────
 function cleanJson(text) {
@@ -953,133 +991,178 @@ function computeMetrics(gt,pred){
 }
 
 // ─── Benchmark ────────────────────────────────────────────────────────────
+
+async function callModel(model, serverType, serverUrl, apiKey, scene) {
+  const profile = SERVERS[serverType];
+  const base = serverUrl.trim().replace(/\/$/, '');
+  const temperature = parseFloat(document.getElementById('temperature').value);
+  const maxTokens = parseInt(document.getElementById('maxTokens').value);
+  const userPromptText = getPrompt();
+
+  let messages;
+  if (state.visionEnabled) {
+    const imgBase64 = await buildImagePayload();
+    messages = [
+      { role: 'user', content: [
+        { type: 'image_url', image_url: { url: `data:image/png;base64,${imgBase64}` } },
+        { type: 'text', text: userPromptText }
+      ]}
+    ];
+  } else {
+    messages = [{ role: 'user', content: userPromptText }];
+  }
+
+  const body = profile.buildBody(model, messages, false);
+  if (body.temperature !== undefined) body.temperature = temperature;
+  if (body.max_tokens !== undefined) body.max_tokens = maxTokens;
+
+  const resp = await fetch(`${base}${profile.completionPath}`, {
+    method: 'POST',
+    headers: getHeaders(serverType, apiKey),
+    body: JSON.stringify(body)
+  });
+
+  if (!resp.ok) {
+    const e = await resp.text();
+    throw new Error(`API ${resp.status}: ${e}`);
+  }
+
+  const data = await resp.json();
+  let text = '';
+  if (serverType === 'anthropic') {
+    text = data.content?.[0]?.text || '';
+  } else {
+    text = data.choices?.[0]?.message?.content || data.content?.[0]?.text || '';
+  }
+  return { raw: JSON.stringify(data, null, 2), text };
+}
+
 async function runBenchmark() {
   if(state.running) return;
   if(!state.scene){alert('请先选择一个测试场景');return;}
-  state.running=true; state.predictions=[];
-  document.getElementById('runBtn').disabled=true;
-  setStatus('busy','正在调用模型...');
+  if(selectedModels.size === 0){alert('请先选择至少一个模型');return;}
 
-  try{
-    const t0=Date.now();
-    const {raw,text}=await callLiteLLM(state.scene);
-    const elapsed=Date.now()-t0;
-    setStatus('busy','解析响应...');
-    const boxes=parseBoxes(text);
-    processResults(boxes, elapsed, text);
-  }catch(err){
-    setStatus('err','错误: '+err.message);
-    renderError(err.message);
-  }finally{
-    state.running=false;
-    document.getElementById('runBtn').disabled=false;
+  state.running=true;
+  state.predictions=[];
+  state.allResults = {};
+  document.getElementById('runBtn').disabled=true;
+  document.getElementById('resultsBody').innerHTML = '';
+
+  const serverType = serverTypeEl.value;
+  const serverUrl = serverUrlEl.value;
+  const apiKey = document.getElementById('apiKey').value.trim();
+
+  try {
+    for (const model of selectedModels) {
+      setStatus('busy', `正在调用模型: ${model}...`);
+      const t0 = Date.now();
+      try {
+        const { raw, text } = await callModel(model, serverType, serverUrl, apiKey, state.scene);
+        const elapsed = Date.now() - t0;
+        const boxes = parseBoxes(text);
+        const results = processModelResults(model, boxes, elapsed, text);
+        state.allResults[model] = { results, elapsed, rawText: text };
+        renderModelResultCard(model, results, elapsed, text);
+      } catch (err) {
+        renderModelError(model, err.message);
+      }
+    }
+    setStatus('ok', '所有模型测试完成');
+  } catch (err) {
+    setStatus('err', '发生意外错误: ' + err.message);
+  } finally {
+    state.running = false;
+    document.getElementById('runBtn').disabled = false;
+    const firstModel = Array.from(selectedModels)[0];
+    if (state.allResults[firstModel]) {
+      state.predictions = state.allResults[firstModel].results.filter(r => r.pred).map(r => ({ ...r.pred, id: r.gt.id }));
+      state.lastResults = state.allResults[firstModel];
+      drawOverlay();
+    }
   }
 }
 
-function processResults(boxes, elapsed, rawText) {
-  const thresh=parseFloat(document.getElementById('iouThreshold').value);
-  const results=state.groundTruth.map(gt=>{
-    const pred=boxes.find(b=>b.id===gt.id)||boxes[state.groundTruth.indexOf(gt)];
-    if(!pred) return {gt,pred:null,iou:0,matched:false,metrics:null};
-    const iou=computeIoU(gt,pred);
-    const metrics=computeMetrics(gt,pred);
-    const oob=isOOB(pred);
-    return {gt,pred:{...pred,iou,oob},iou,matched:iou>=thresh,metrics};
+function processModelResults(model, boxes, elapsed, rawText) {
+  const thresh = parseFloat(document.getElementById('iouThreshold').value);
+  return state.groundTruth.map(gt => {
+    const pred = boxes.find(b => b.id === gt.id) || boxes[state.groundTruth.indexOf(gt)];
+    if (!pred) return { gt, pred: null, iou: 0, matched: false, metrics: null };
+    const iou = computeIoU(gt, pred);
+    const metrics = computeMetrics(gt, pred);
+    const oob = isOOB(pred);
+    return { gt, pred: { ...pred, iou, oob }, iou, matched: iou >= thresh, metrics };
   });
-  state.lastResults={results,elapsed,rawText};
-  state.predictions=results.filter(r=>r.pred).map(r=>({...r.pred,id:r.gt.id}));
-  drawOverlay();
-  renderResults(results,elapsed,rawText);
-  const passed=results.filter(r=>r.matched).length;
-  setStatus('ok',`完成 · ${passed}/${results.length} 通过 · ${elapsed}ms`);
 }
 
+
 function recomputeIfDone() {
-  if(!state.lastResults) return;
-  const {results,elapsed,rawText}=state.lastResults;
-  const thresh=parseFloat(document.getElementById('iouThreshold').value);
-  const updated=results.map(r=>r.pred?{...r,iou:computeIoU(r.gt,r.pred),matched:computeIoU(r.gt,r.pred)>=thresh}:r);
-  state.lastResults.results=updated;
-  renderResults(updated,elapsed,rawText);
+  if(!state.allResults) return;
+  const thresh = parseFloat(document.getElementById('iouThreshold').value);
+  document.getElementById('resultsBody').innerHTML = '';
+  for (const [model, data] of Object.entries(state.allResults)) {
+    const updated = data.results.map(r => r.pred ? { ...r, iou: computeIoU(r.gt, r.pred), matched: computeIoU(r.gt, r.pred) >= thresh } : r);
+    state.allResults[model].results = updated;
+    renderModelResultCard(model, updated, data.elapsed, data.rawText);
+  }
+  if (state.lastResults) {
+      state.predictions = state.lastResults.results.filter(r => r.pred).map(r => ({ ...r.pred, id: r.gt.id }));
+  }
   drawOverlay();
 }
 
 // ─── Manual edit of prediction boxes ─────────────────────────────────────
-function applyEdit(gtId) {
-  const px=parseInt(document.getElementById(`ep_x_${gtId}`).value)||0;
-  const py=parseInt(document.getElementById(`ep_y_${gtId}`).value)||0;
-  const pw=parseInt(document.getElementById(`ep_w_${gtId}`).value)||0;
-  const ph=parseInt(document.getElementById(`ep_h_${gtId}`).value)||0;
-  const pl=document.getElementById(`ep_l_${gtId}`).value||'';
 
-  const newPred={id:gtId, label:pl, x:px, y:py, w:pw, h:ph};
-  const oob=isOOB(newPred);
+function renderModelResultCard(model, results, elapsed, rawText) {
+  const thresh = parseFloat(document.getElementById('iouThreshold').value);
+  const passed = results.filter(r => r.matched).length;
+  const avgIoU = results.length ? (results.reduce((s, r) => s + r.iou, 0) / results.length).toFixed(3) : '0';
+  const oobCount = results.filter(r => r.pred && isOOB(r.pred)).length;
 
-  // Update lastResults
-  if(state.lastResults){
-    state.lastResults.results=state.lastResults.results.map(r=>{
-      if(r.gt.id!==gtId) return r;
-      const iou=computeIoU(r.gt,newPred);
-      const thresh=parseFloat(document.getElementById('iouThreshold').value);
-      return {...r, pred:{...newPred,iou,oob}, iou, matched:iou>=thresh, metrics:computeMetrics(r.gt,newPred)};
-    });
-  }
-  // Update state.predictions
-  const idx=state.predictions.findIndex(p=>p.id===gtId);
-  const thresh=parseFloat(document.getElementById('iouThreshold').value);
-  const iou=state.groundTruth.find(g=>g.id===gtId) ? computeIoU(state.groundTruth.find(g=>g.id===gtId),newPred):0;
-  if(idx>=0) state.predictions[idx]={...newPred,iou,oob};
-  else state.predictions.push({...newPred,iou,oob});
+  const modelSafeId = btoa(encodeURIComponent(model)).replace(/[^a-zA-Z0-9]/g, '');
 
-  drawOverlay();
-  if(state.lastResults) renderResults(state.lastResults.results,state.lastResults.elapsed,state.lastResults.rawText);
-}
-
-// ─── Render Results ───────────────────────────────────────────────────────
-function renderResults(results, elapsed, rawText) {
-  const thresh=parseFloat(document.getElementById('iouThreshold').value);
-  const passed=results.filter(r=>r.matched).length;
-  const avgIoU=results.length?(results.reduce((s,r)=>s+r.iou,0)/results.length).toFixed(3):'0';
-  const oobCount=results.filter(r=>r.pred&&isOOB(r.pred)).length;
-
-  let html=`<div class="summary-strip">
-    <div class="seg ${passed===results.length?'green':passed>0?'yellow':'red'}">
-      <div class="sv">${passed}/${results.length}</div><div class="sk">通过</div>
+  let html = `<div class="model-card" id="card-${modelSafeId}">
+    <div class="model-card-header">
+      <div class="model-card-name">${escapeHtml(model)}</div>
+      <button class="btn-sm" onclick="showOnCanvas('${escJs(model)}')">在画布查看</button>
     </div>
-    <div class="seg">
-      <div class="sv" style="color:var(--accent2)">${avgIoU}</div><div class="sk">平均IoU</div>
-    </div>
-    <div class="seg">
-      <div class="sv" style="color:${oobCount?'var(--warn)':'var(--muted)'}">${oobCount}</div><div class="sk">越界框</div>
-    </div>
-    <div class="seg">
-      <div class="sv" style="color:var(--muted)">${elapsed}ms</div><div class="sk">耗时</div>
-    </div>
-  </div>`;
+    <div style="padding: 10px;">
+      <div class="summary-strip">
+        <div class="seg ${passed === results.length ? 'green' : passed > 0 ? 'yellow' : 'red'}">
+          <div class="sv">${passed}/${results.length}</div><div class="sk">通过</div>
+        </div>
+        <div class="seg">
+          <div class="sv" style="color:var(--accent2)">${avgIoU}</div><div class="sk">平均IoU</div>
+        </div>
+        <div class="seg">
+          <div class="sv" style="color:${oobCount ? 'var(--accent3)' : 'var(--text3)'}">${oobCount}</div><div class="sk">越界框</div>
+        </div>
+        <div class="seg">
+          <div class="sv" style="color:var(--text3)">${elapsed}ms</div><div class="sk">耗时</div>
+        </div>
+      </div>`;
 
-  results.forEach(r=>{
-    const iouClass=r.iou>=thresh?'iou-good':r.iou>=thresh*0.6?'iou-mid':'iou-bad';
-    const barCol=r.iou>=thresh?'var(--accent)':r.iou>=thresh*0.6?'var(--warn)':'var(--danger)';
-    const oob=r.pred&&isOOB(r.pred);
-    const gtId=r.gt.id.replace(/[^a-zA-Z0-9_]/g,'_');
+  results.forEach(r => {
+    const iouClass = r.iou >= thresh ? 'iou-good' : r.iou >= thresh * 0.6 ? 'iou-mid' : 'iou-bad';
+    const barCol = r.iou >= thresh ? 'var(--accent)' : r.iou >= thresh * 0.6 ? 'var(--accent3)' : 'var(--danger)';
+    const oob = r.pred && isOOB(r.pred);
+    const gtId = r.gt.id.replace(/[^a-zA-Z0-9_]/g, '_') + '_' + modelSafeId;
 
-    html+=`<div class="result-card">
+    html += `<div class="result-card">
       <div class="result-card-head">
-        <div class="result-label">${escHtml(r.gt.id)} <span style="color:var(--muted);font-size:11px;font-weight:400">${escHtml(r.gt.label||'')}</span>${oob?`<span class="oob-tag">OOB</span>`:''}</div>
+        <div class="result-label">${escapeHtml(r.gt.id)} <span style="color:var(--text3);font-size:11px;font-weight:400">${escapeHtml(r.gt.label || '')}</span>${oob ? `<span class="oob-tag">OOB</span>` : ''}</div>
         <div class="iou-badge ${iouClass}">IoU ${r.iou.toFixed(3)}</div>
       </div>
       <div class="result-card-body">
         <div class="score-bar-wrap">
-          <div class="score-bar-label"><span>交并比</span><span>${(r.iou*100).toFixed(1)}%</span></div>
-          <div class="score-bar-bg"><div class="score-bar-fill" style="width:${r.iou*100}%;background:${barCol}"></div></div>
+          <div class="score-bar-label"><span>交并比</span><span>${(r.iou * 100).toFixed(1)}%</span></div>
+          <div class="score-bar-bg"><div class="score-bar-fill" style="width:${r.iou * 100}%;background:${barCol}"></div></div>
         </div>`;
 
-    if(r.pred){
-      // What the model thinks this box marks
-      if(r.pred.label){
-        html+=`<div class="pred-label-tag" style="margin-top:7px">模型标注内容: <span class="pred-label-val">${escHtml(r.pred.label)}</span></div>`;
+    if (r.pred) {
+      if (r.pred.label) {
+        html += `<div class="pred-label-tag" style="margin-top:7px">模型标注内容: <span class="pred-label-val">${escapeHtml(r.pred.label)}</span></div>`;
       }
-      html+=`<div class="bbox-compare" style="margin-top:8px">
+      html += `<div class="bbox-compare" style="margin-top:8px">
         <div class="bbox-col">
           <div class="col-title">Ground Truth</div>
           <div class="bbox-val">x:${r.gt.x} y:${r.gt.y}<br>w:${r.gt.w} h:${r.gt.h}</div>
@@ -1092,25 +1175,24 @@ function renderResults(results, elapsed, rawText) {
         </div>
       </div>`;
 
-      if(r.metrics){
-        html+=`<div class="stats-row">
+      if (r.metrics) {
+        html += `<div class="stats-row">
           <div class="stat-item">
-            <div class="sv" style="color:${r.metrics.centerDist<20?'var(--accent)':r.metrics.centerDist<50?'var(--warn)':'var(--danger)'}">${r.metrics.centerDist}px</div>
+            <div class="sv" style="color:${r.metrics.centerDist < 20 ? 'var(--accent)' : r.metrics.centerDist < 50 ? 'var(--accent3)' : 'var(--danger)'}">${r.metrics.centerDist}px</div>
             <div class="sk">中心偏差</div>
           </div>
           <div class="stat-item">
-            <div class="sv" style="color:${r.metrics.sizeErr<10?'var(--accent)':r.metrics.sizeErr<30?'var(--warn)':'var(--danger)'}">${r.metrics.sizeErr}%</div>
+            <div class="sv" style="color:${r.metrics.sizeErr < 10 ? 'var(--accent)' : r.metrics.sizeErr < 30 ? 'var(--accent3)' : 'var(--danger)'}">${r.metrics.sizeErr}%</div>
             <div class="sk">面积误差</div>
           </div>
           <div class="stat-item">
-            <div class="sv" style="color:${r.matched?'var(--accent)':'var(--danger)'}">${r.matched?'✓ 通过':'✗ 失败'}</div>
+            <div class="sv" style="color:${r.matched ? 'var(--accent)' : 'var(--danger)'}">${r.matched ? '✓ 通过' : '✗ 失败'}</div>
             <div class="sk">结果</div>
           </div>
         </div>`;
       }
 
-      // Manual edit section
-      html+=`<details style="margin-top:6px">
+      html += `<details style="margin-top:6px">
         <summary style="font-size:10px;color:var(--accent2);cursor:pointer;user-select:none;list-style:none">✎ 手动修改预测值重新校验</summary>
         <div style="margin-top:6px">
           <div class="pred-edit">
@@ -1121,14 +1203,14 @@ function renderResults(results, elapsed, rawText) {
           </div>
           <div style="margin-top:4px">
             <div class="field-label">标注内容描述</div>
-            <input id="ep_l_${gtId}" type="text" value="${escHtml(r.pred.label||'')}" placeholder="该框标记的内容..." style="height:26px;font-size:11px;padding:3px 7px">
+            <input id="ep_l_${gtId}" type="text" value="${escapeHtml(r.pred.label || '')}" placeholder="该框标记的内容..." style="height:26px;font-size:11px;padding:3px 7px">
           </div>
-          <button class="btn-apply" onclick="applyEdit('${escJs(r.gt.id)}')">↻ 应用并重新计算 IoU</button>
+          <button class="btn-apply" onclick="applyEdit('${escJs(r.gt.id)}', '${escJs(model)}')">↻ 应用并重新计算 IoU</button>
         </div>
       </details>`;
 
     } else {
-      html+=`<div style="color:var(--danger);font-size:12px;margin-top:8px">⚠ 模型未返回该对象的预测框</div>
+      html += `<div style="color:var(--danger);font-size:12px;margin-top:8px">⚠ 模型未返回该对象的预测框</div>
       <details style="margin-top:6px">
         <summary style="font-size:10px;color:var(--accent2);cursor:pointer;user-select:none;list-style:none">+ 手动添加预测框</summary>
         <div style="margin-top:6px">
@@ -1141,32 +1223,83 @@ function renderResults(results, elapsed, rawText) {
           <div style="margin-top:4px">
             <input id="ep_l_${gtId}" type="text" value="" placeholder="标注内容描述" style="height:26px;font-size:11px;padding:3px 7px">
           </div>
-          <button class="btn-apply" onclick="applyEdit('${escJs(r.gt.id)}')">↻ 应用</button>
+          <button class="btn-apply" onclick="applyEdit('${escJs(r.gt.id)}', '${escJs(model)}')">↻ 应用</button>
         </div>
       </details>`;
     }
-    html+=`</div></div>`;
+    html += `</div></div>`;
   });
 
-  html+=`<div style="margin-top:8px">
+  html += `<div style="margin-top:8px">
     <div class="field-label" style="padding:0 0 4px">模型原始响应</div>
-    <div class="log-box"><span class="raw-response">${escHtml(rawText)}</span></div>
-  </div>`;
+    <div class="log-box"><span class="raw-response">${escapeHtml(rawText)}</span></div>
+  </div></div></div>`;
 
-  document.getElementById('resultsBody').innerHTML=html;
+  document.getElementById('resultsBody').insertAdjacentHTML('beforeend', html);
 }
 
-function renderError(msg) {
-  document.getElementById('resultsBody').innerHTML=`
-    <div class="result-card">
-      <div class="result-card-head"><div class="result-label" style="color:var(--danger)">⚠ 请求失败</div></div>
-      <div class="result-card-body"><div class="log-box" style="color:var(--danger)">${escHtml(msg)}</div></div>
+function showOnCanvas(model) {
+  if (state.allResults && state.allResults[model]) {
+    state.predictions = state.allResults[model].results.filter(r => r.pred).map(r => ({ ...r.pred, id: r.gt.id }));
+    state.lastResults = state.allResults[model];
+    drawOverlay();
+    document.querySelectorAll('.model-card').forEach(c => c.style.borderColor = 'var(--accent2)');
+    const modelSafeId = btoa(encodeURIComponent(model)).replace(/[^a-zA-Z0-9]/g, '');
+    const card = document.getElementById(`card-${modelSafeId}`);
+    if (card) card.style.borderColor = 'var(--accent)';
+  }
+}
+
+function renderModelError(model, msg) {
+  const html = `
+    <div class="model-card" style="border-color: var(--danger)">
+      <div class="model-card-header"><div class="model-card-name">${escapeHtml(model)}</div></div>
+      <div style="padding: 10px;">
+        <div class="result-card">
+          <div class="result-card-head"><div class="result-label" style="color:var(--danger)">⚠ 请求失败</div></div>
+          <div class="result-card-body"><div class="log-box" style="color:var(--danger)">${escapeHtml(msg)}</div></div>
+        </div>
+      </div>
     </div>`;
+  document.getElementById('resultsBody').insertAdjacentHTML('beforeend', html);
 }
-function clearResults() {
-  document.getElementById('resultsBody').innerHTML=`
-    <div class="empty-state"><div class="icon">◎</div><p>场景已加载，点击运行按钮开始测试</p></div>`;
+
+function applyEdit(gtId, model) {
+  const modelSafeId = btoa(encodeURIComponent(model)).replace(/[^a-zA-Z0-9]/g, '');
+  const domId = gtId.replace(/[^a-zA-Z0-9_]/g, '_') + '_' + modelSafeId;
+  const px = parseInt(document.getElementById(`ep_x_${domId}`).value) || 0;
+  const py = parseInt(document.getElementById(`ep_y_${domId}`).value) || 0;
+  const pw = parseInt(document.getElementById(`ep_w_${domId}`).value) || 0;
+  const ph = parseInt(document.getElementById(`ep_h_${domId}`).value) || 0;
+  const pl = document.getElementById(`ep_l_${domId}`).value || '';
+
+  const newPred = { id: gtId, label: pl, x: px, y: py, w: pw, h: ph };
+  const oob = isOOB(newPred);
+
+  if (state.allResults && state.allResults[model]) {
+    state.allResults[model].results = state.allResults[model].results.map(r => {
+      if (r.gt.id !== gtId) return r;
+      const iou = computeIoU(r.gt, newPred);
+      const thresh = parseFloat(document.getElementById('iouThreshold').value);
+      return { ...r, pred: { ...newPred, iou, oob }, iou, matched: iou >= thresh, metrics: computeMetrics(r.gt, newPred) };
+    });
+
+    if (state.lastResults === state.allResults[model]) {
+      const idx = state.predictions.findIndex(p => p.id === gtId);
+      const iou = computeIoU(state.groundTruth.find(g => g.id === gtId), newPred);
+      if (idx >= 0) state.predictions[idx] = { ...newPred, iou, oob };
+      else state.predictions.push({ ...newPred, iou, oob });
+      drawOverlay();
+    }
+
+    document.getElementById('resultsBody').innerHTML = '';
+    for (const [m, data] of Object.entries(state.allResults)) {
+      renderModelResultCard(m, data.results, data.elapsed, data.rawText);
+    }
+    showOnCanvas(model);
+  }
 }
+
 
 // ─── Status ───────────────────────────────────────────────────────────────
 function setStatus(s, text, extra='') {
@@ -1175,12 +1308,10 @@ function setStatus(s, text, extra='') {
   document.getElementById('statusExtra').textContent=extra;
 }
 
-function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function escJs(s){return String(s).replace(/'/g,"\\'").replace(/\\/g,'\\\\');}
 
 // ─── Init ─────────────────────────────────────────────────────────────────
+initTheme();
 loadScene('letters');
 </script>
-
-
 </body></html>
