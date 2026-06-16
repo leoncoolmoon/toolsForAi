@@ -305,6 +305,33 @@
                 </a>
             </div>
         </div>
+
+        <!-- 卡片 3: LLM 边界框标定测试 (LLM -bbox.html) -->
+        <div class="tool-card">
+            <div class="card-header">
+                <div class="card-icon">⬡</div>
+                <h2>BBoxBench 标定台</h2>
+            </div>
+            <div class="card-body">
+                <div class="desc">
+                    专为多模态模型设计的边界框 (BBox) 标定能力评测工具。通过视觉与文本双重任务，验证 LLM 对空间坐标的理解与生成精度。
+                </div>
+                <ul class="feature-list">
+                    <li>🎯 实时 IoU (交并比) 计算、中心偏差及面积误差分析</li>
+                    <li>🖼️ 支持 Vision 模式 (发送 Canvas 图片) 与 纯文本模式 (空间推理)</li>
+                    <li>🔄 预设多种测试场景 (字母、几何、Emoji、随机)</li>
+                    <li>📊 多模型并行对比，支持在画布上切换查看不同模型的标注框</li>
+                    <li>✎ 支持手动修改预测值即时重新校验，探索模型感知边界</li>
+                </ul>
+                <div class="highlight">
+                    🤖 兼容 20+ 模型提供商，支持 Anthropic Claude 3 / OpenAI GPT-4o 等多模态模型。<br>
+                    📏 虚拟画布 600×450 像素，支持越界框 (OOB) 检测。
+                </div>
+                <a href="LLM -bbox.html" class="btn-launch" target="_blank" rel="noopener noreferrer">
+                    ⬡ 进入标定测试 →
+                </a>
+            </div>
+        </div>
     </div>
 
     <!-- 并排简介区：突出两个工具配合使用场景 -->
@@ -347,6 +374,7 @@
             setTimeout(() => {
                 checkFile('litellm-performance.html');
                 checkFile('LLMtester.html');
+                checkFile('LLM -bbox.html');
             }, 500);
         }
     })();
