@@ -1,849 +1,636 @@
 <!DOCTYPE html>
-<!-- saved from url=(0070)file:///C:/Users/leonc/Documents/html/visualtool/llm-bbox-tester2.html -->
-<html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LLM 边界框标定测试台</title>
-<link rel="stylesheet" href="llm.css">
+<title>BBoxBench Pro · LLM 边界框标定测试台</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;500;600&display=swap');
 
-  :root {
-    --radius: 8px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.6; min-height: 100vh; }
+/* ── Theme ─────────────────────────────────────────────── */
+:root,[data-theme="dark"]{
+  --bg:#0f0f0f;--surface:#191919;--surface2:#222;
+  --border:#2a2a2a;--border2:#333;
+  --text:#e8e8e8;--text2:#aaa;--text3:#666;
+  --accent:#4fffb0;--accent2:#7c6aff;--accent3:#ffb347;
+  --danger:#ff5e7a;--purple:#a78bfa;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;--radius:8px;
+}
+[data-theme="light"]{
+  --bg:#f5f5f4;--surface:#fff;--surface2:#f0f0ef;
+  --border:#e0dedd;--border2:#d0cecd;
+  --text:#1c1917;--text2:#4b5563;--text3:#71717a;
+  --accent:#16a34a;--accent2:#7c3aed;--accent3:#d97706;
+  --danger:#dc2626;
+}
+@media(prefers-color-scheme:light){[data-theme="system"]{
+  --bg:#f5f5f4;--surface:#fff;--surface2:#f0f0ef;
+  --border:#e0dedd;--border2:#d0cecd;
+  --text:#1c1917;--text2:#6b7280;--text3:#a8a29e;
+  --accent:#16a34a;--accent2:#7c3aed;--accent3:#d97706;--danger:#dc2626;
+}}
+@media(prefers-color-scheme:dark){[data-theme="system"]{
+  --bg:#0f0f0f;--surface:#191919;--surface2:#222;
+  --border:#2a2a2a;--border2:#333;
+  --text:#e8e8e8;--text2:#888;--text3:#555;
+  --accent:#4fffb0;--accent2:#7c6aff;--accent3:#ffb347;--danger:#ff5e7a;
+}}
 
-  header { border-bottom: 1px solid var(--border2); padding: 12px 20px; display: flex; align-items: center; gap: 14px; background: var(--surface); }
-  header .logo { font-family: var(--mono); font-weight: 600; font-size: 15px; color: var(--accent); letter-spacing: 0.03em; }
-  header .tagline { color: var(--text3); font-size: 12px; border-left: 1px solid var(--border2); padding-left: 14px; }
-  header .hdr-actions { margin-left: auto; display: flex; gap: 12px; align-items: center; flex-wrap: nowrap; }
-  .badge { background: color-mix(in srgb, var(--accent2) 15%, transparent); border: 1px solid color-mix(in srgb, var(--accent2) 40%, transparent); color: var(--accent2); font-size: 11px; font-family: var(--mono); padding: 3px 10px; border-radius: 20px; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.6;min-height:100vh;}
 
-  .layout { display: grid; grid-template-columns: 300px 1fr 340px; height: calc(100vh - 49px); overflow: hidden; }
+/* ── Header ────────────────────────────────────────────── */
+header{border-bottom:1px solid var(--border2);padding:9px 16px;display:flex;align-items:center;gap:12px;background:var(--surface);flex-shrink:0;}
+.logo{font-family:var(--mono);font-weight:600;font-size:15px;color:var(--accent);letter-spacing:.03em;}
+.tagline{color:var(--text3);font-size:12px;border-left:1px solid var(--border2);padding-left:12px;}
+.hdr-actions{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:nowrap;}
+.badge{background:color-mix(in srgb,var(--accent2) 15%,transparent);border:1px solid color-mix(in srgb,var(--accent2) 40%,transparent);color:var(--accent2);font-size:11px;font-family:var(--mono);padding:3px 9px;border-radius:20px;}
+.theme-switcher{display:flex;gap:3px;}
+.theme-btn{background:none;border:1px solid var(--border2);color:var(--text3);border-radius:5px;padding:0 9px;height:26px;font-size:11px;cursor:pointer;transition:all .15s;font-family:var(--mono);}
+.theme-btn:hover{border-color:var(--text3);color:var(--text);}
+.theme-btn.active{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent);}
 
-  .panel { background: var(--surface); border-right: 1px solid var(--border2); overflow-y: auto; display: flex; flex-direction: column; }
-  .panel-title { font-size: 10px; font-family: var(--mono); letter-spacing: 0.12em; color: var(--text3); text-transform: uppercase; padding: 12px 14px 8px; border-bottom: 1px solid var(--border2); background: var(--bg); position: sticky; top: 0; z-index: 2; }
+/* ── Layout ────────────────────────────────────────────── */
+.layout{display:grid;grid-template-columns:290px 1fr 360px;height:calc(100vh - 45px);overflow:hidden;}
 
-  .field-group { padding: 12px 14px; border-bottom: 1px solid var(--border2); }
-  .field-label { font-size: 11px; color: var(--text3); margin-bottom: 5px; font-weight: 500; letter-spacing: 0.04em; }
-  input, select, textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border2); color: var(--text); padding: 7px 9px; border-radius: var(--radius); font-family: var(--mono); font-size: 12px; outline: none; transition: border-color 0.15s; }
-  input:focus, select:focus, textarea:focus { border-color: var(--accent2); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent2) 15%, transparent); }
-  textarea { resize: vertical; min-height: 90px; line-height: 1.55; }
-  select option { background: var(--surface2); }
-  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+/* ── Left Panel ─────────────────────────────────────────── */
+.lpanel{background:var(--surface);border-right:1px solid var(--border2);overflow-y:auto;display:flex;flex-direction:column;}
+.panel-title{font-size:10px;font-family:var(--mono);letter-spacing:.12em;color:var(--text3);text-transform:uppercase;padding:9px 13px 6px;border-bottom:1px solid var(--border2);background:var(--bg);position:sticky;top:0;z-index:2;}
+.fg{padding:10px 13px;border-bottom:1px solid var(--border2);}
+.fl{font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:500;letter-spacing:.04em;}
+input,select,textarea{width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:6px 9px;border-radius:var(--radius);font-family:var(--mono);font-size:12px;outline:none;transition:border-color .15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent2);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent2) 15%,transparent);}
+textarea{resize:vertical;min-height:88px;line-height:1.55;}
+select option{background:var(--surface2);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
 
-  button { cursor: pointer; font-family: var(--sans); font-weight: 500; border: none; border-radius: var(--radius); transition: all 0.15s; font-size: 13px; }
-  .btn-primary { background: var(--accent); color: #0d0f14; padding: 9px 18px; width: 100%; letter-spacing: 0.02em; }
-  .btn-primary:hover { background: #6fffbf; transform: translateY(-1px); }
-  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-  .btn-reset { background: color-mix(in srgb, var(--danger) 12%, transparent); border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent); color: var(--danger); padding: 9px 18px; width: 100%; }
-  .btn-reset:hover { background: color-mix(in srgb, var(--danger) 22%, transparent); }
-  .btn-outline { background: transparent; border: 1px solid var(--border2); color: var(--text3); padding: 6px 12px; }
-  .btn-outline:hover { border-color: var(--accent2); color: var(--text); }
-  .btn-sm { padding: 5px 10px; font-size: 11px; background: var(--surface2); color: var(--text3); border: 1px solid var(--border2); }
-  .btn-sm:hover { color: var(--text); border-color: var(--text3); }
-  .btn-sm.active { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+/* ── Buttons ────────────────────────────────────────────── */
+button{cursor:pointer;font-family:var(--sans);font-weight:500;border:none;border-radius:var(--radius);transition:all .15s;font-size:13px;}
+.btn-primary{background:var(--accent);color:#0d0f14;padding:8px 16px;width:100%;letter-spacing:.02em;}
+.btn-primary:hover{filter:brightness(1.12);transform:translateY(-1px);}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.btn-danger{background:color-mix(in srgb,var(--danger) 12%,transparent);border:1px solid color-mix(in srgb,var(--danger) 30%,transparent);color:var(--danger);padding:8px 12px;}
+.btn-danger:hover{background:color-mix(in srgb,var(--danger) 22%,transparent);}
+.btn-purple{background:color-mix(in srgb,var(--accent2) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent2) 30%,transparent);color:var(--accent2);padding:8px 12px;}
+.btn-purple:hover{background:color-mix(in srgb,var(--accent2) 22%,transparent);}
+.btn-amber{background:color-mix(in srgb,var(--accent3) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent3) 30%,transparent);color:var(--accent3);padding:8px 12px;}
+.btn-amber:hover{background:color-mix(in srgb,var(--accent3) 22%,transparent);}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text3);padding:5px 10px;}
+.btn-outline:hover{border-color:var(--accent2);color:var(--text);}
+.btn-sm{padding:4px 9px;font-size:11px;background:var(--surface2);color:var(--text3);border:1px solid var(--border2);}
+.btn-sm:hover{color:var(--text);border-color:var(--text3);}
+.btn-sm.active{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent);}
+.btn-apply{width:100%;margin-top:4px;font-size:11px;padding:4px;background:color-mix(in srgb,var(--accent2) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent2) 35%,transparent);color:var(--accent2);border-radius:4px;cursor:pointer;}
+.btn-apply:hover{background:color-mix(in srgb,var(--accent2) 22%,transparent);}
 
-  /* Canvas area */
-  .canvas-area { background: var(--bg); display: flex; flex-direction: column; overflow: hidden; }
-  .canvas-toolbar { padding: 8px 14px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--border2); background: var(--surface); flex-shrink: 0; flex-wrap: wrap; }
-  .canvas-toolbar .spacer { flex: 1; }
-  .canvas-wrap { flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 20px; }
-  /* Virtual viewport: clips GT canvas but shows overflow */
-  .canvas-viewport { position: relative; flex-shrink: 0; }
-  .canvas-boundary { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 3; }
-  #mainCanvas { display: block; border-radius: 3px; }
-  #overlayCanvas { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 2; }
-  /* overflow container: larger than canvas to show out-of-bound boxes */
-  .canvas-outer { position: relative; }
-  .canvas-inner { position: absolute; }
+/* ── Server config ─────────────────────────────────────── */
+.server-card{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:10px;}
+.server-row{display:flex;gap:7px;align-items:flex-start;flex-direction:column;}
+.hint{font-size:11px;color:var(--text3);margin-top:4px;line-height:1.5;}
+.hint code{font-family:var(--mono);background:var(--surface2);padding:1px 4px;border-radius:3px;font-size:10px;color:var(--accent2);}
+.hint a{color:var(--accent2);}
+.error-msg{font-size:12px;color:var(--danger);margin-top:5px;}
+.models-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;max-height:180px;overflow-y:auto;padding:4px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--bg);margin-top:6px;}
+.model-item{display:flex;align-items:center;gap:7px;padding:5px 8px;border:1px solid var(--border2);border-radius:5px;cursor:pointer;background:var(--surface);transition:border-color .15s;user-select:none;}
+.model-item:hover{border-color:var(--accent);}
+.model-item.selected{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent);}
+.model-item input[type=checkbox]{accent-color:var(--accent);width:12px;height:12px;flex-shrink:0;cursor:pointer;}
+.model-name{font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--mono);}
+.model-item.selected .model-name{color:var(--accent);}
+.empty-msg{font-size:12px;color:var(--text3);text-align:center;padding:1rem 0;}
 
-  /* Right panel */
-  .results-panel { background: var(--surface); border-left: 1px solid var(--border2); display: flex; flex-direction: column; overflow: hidden; }
-  .results-body { flex: 1; overflow-y: auto; padding: 10px; }
+/* ── Scene buttons ─────────────────────────────────────── */
+.scene-btns{display:flex;gap:5px;flex-wrap:wrap;padding:7px 13px 0;}
+.scene-btn{font-size:11px;padding:4px 9px;border-radius:4px;background:var(--surface2);border:1px solid var(--border2);color:var(--text3);cursor:pointer;transition:all .12s;}
+.scene-btn:hover,.scene-btn.active{border-color:var(--accent2);color:var(--text);background:color-mix(in srgb,var(--accent2) 10%,transparent);}
+.section-divider{padding:7px 13px 3px;font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;font-family:var(--mono);}
 
-  .result-card { background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; }
-  .result-card-head { display: flex; align-items: center; justify-content: space-between; padding: 7px 11px; border-bottom: 1px solid var(--border2); background: var(--bg); }
-  .result-label { font-size: 13px; font-weight: 600; }
-  .iou-badge { font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
-  .iou-good { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); }
-  .iou-mid  { background: color-mix(in srgb, var(--accent3)   15%, transparent); color: var(--accent3);   border: 1px solid color-mix(in srgb, var(--accent3)   30%, transparent); }
-  .iou-bad  { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent); }
-  .result-card-body { padding: 9px 11px; background: var(--surface); }
+/* ── Toggles ────────────────────────────────────────────── */
+.toggle-row{display:flex;align-items:center;gap:8px;}
+.toggle-label{font-size:11px;color:var(--text3);flex:1;}
+.toggle{position:relative;width:30px;height:17px;background:var(--border2);border-radius:9px;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.toggle.on{background:var(--accent2);}
+.toggle::after{content:'';position:absolute;width:11px;height:11px;background:white;border-radius:50%;top:3px;left:3px;transition:transform .2s;}
+.toggle.on::after{transform:translateX(13px);}
 
-  .bbox-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-  .bbox-col { font-size: 11px; }
-  .bbox-col .col-title { color: var(--text3); margin-bottom: 3px; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
-  .bbox-val { font-family: var(--mono); color: var(--text); }
+/* ── BG image upload ─────────────────────────────────────── */
+.bg-upload-zone{border:1.5px dashed var(--border2);border-radius:var(--radius);padding:9px 10px;text-align:center;cursor:pointer;transition:border-color .15s;position:relative;background:var(--surface2);}
+.bg-upload-zone:hover{border-color:var(--accent2);}
+.bg-upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.bg-upload-zone .uz-text{font-size:11px;color:var(--text3);pointer-events:none;}
+.bg-upload-zone .uz-text b{color:var(--accent2);}
+.bg-preview{width:100%;height:50px;object-fit:cover;border-radius:5px;border:1px solid var(--border2);display:none;margin-top:5px;}
+.bg-meta{font-size:10px;color:var(--text3);margin-top:3px;font-family:var(--mono);display:none;}
+.bg-opacity-row{display:flex;align-items:center;gap:8px;margin-top:5px;}
+.bg-opacity-row label{font-size:10px;color:var(--text3);white-space:nowrap;}
 
-  /* Editable pred fields */
-  .pred-edit { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px; }
-  .pred-edit input { padding: 4px 6px; font-size: 11px; height: 26px; }
-  .pred-edit-label { font-size: 9px; color: var(--text3); text-align: center; margin-top: 1px; }
-  .btn-apply { width: 100%; margin-top: 5px; font-size: 11px; padding: 4px; background: color-mix(in srgb, var(--accent2) 12%, transparent); border: 1px solid color-mix(in srgb, var(--accent2) 35%, transparent); color: var(--accent2); border-radius: 4px; }
-  .btn-apply:hover { background: color-mix(in srgb, var(--accent2) 22%, transparent); }
+/* ── Prompt ─────────────────────────────────────────────── */
+.prompt-wrap{position:relative;}
+.prompt-copy{position:absolute;top:4px;right:4px;font-size:10px;padding:2px 6px;background:var(--surface2);border:1px solid var(--border2);color:var(--text3);border-radius:4px;cursor:pointer;z-index:1;}
+.prompt-copy:hover{color:var(--text);}
+.edit-toggle{font-size:10px;color:var(--accent2);cursor:pointer;text-decoration:underline;}
 
-  .stats-row { display: flex; gap: 6px; margin-bottom: 6px; }
-  .stat-item { flex: 1; background: var(--bg); border: 1px solid var(--border2); border-radius: 6px; padding: 5px 6px; text-align: center; }
-  .stat-item .sv { font-family: var(--mono); font-size: 12px; font-weight: 600; }
-  .stat-item .sk { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 1px; }
+/* ── Canvas ─────────────────────────────────────────────── */
+.canvas-area{background:var(--bg);display:flex;flex-direction:column;overflow:hidden;}
+.canvas-toolbar{padding:7px 12px;display:flex;align-items:center;gap:5px;border-bottom:1px solid var(--border2);background:var(--surface);flex-shrink:0;flex-wrap:wrap;}
+.canvas-toolbar .spacer{flex:1;}
+.canvas-wrap{flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:16px;}
+.canvas-outer{position:relative;flex-shrink:0;}
 
-  .score-bar-wrap { margin-top: 5px; }
-  .score-bar-label { display: flex; justify-content: space-between; font-size: 10px; color: var(--text3); margin-bottom: 2px; }
-  .score-bar-bg { background: var(--border2); height: 4px; border-radius: 3px; overflow: hidden; }
-  .score-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+/* ── Status ─────────────────────────────────────────────── */
+.status-bar{padding:5px 11px;background:var(--bg);border-top:1px solid var(--border2);font-family:var(--mono);font-size:10px;color:var(--text3);display:flex;gap:12px;flex-shrink:0;}
+.status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--text3);margin-right:4px;vertical-align:middle;}
+.status-dot.ok{background:var(--accent);box-shadow:0 0 6px var(--accent);}
+.status-dot.busy{background:var(--accent3);animation:pulse 1s infinite;}
+.status-dot.err{background:var(--danger);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-  .log-box { background: var(--bg); border: 1px solid var(--border2); border-radius: var(--radius); padding: 8px 10px; font-family: var(--mono); font-size: 10px; color: var(--text3); max-height: 120px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; margin-top: 6px; }
+/* ── Right panel ─────────────────────────────────────────── */
+.results-panel{background:var(--surface);border-left:1px solid var(--border2);display:flex;flex-direction:column;overflow:hidden;}
+.tab-bar{display:flex;border-bottom:1px solid var(--border2);background:var(--bg);flex-shrink:0;}
+.tab{flex:1;padding:8px 6px;font-size:11px;text-align:center;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;transition:all .15s;font-family:var(--mono);}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-panel{display:none;flex:1;overflow-y:auto;padding:10px;}
+.tab-panel.active{display:flex;flex-direction:column;}
 
-  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text3); text-align: center; gap: 8px; }
-  .empty-state .icon { font-size: 30px; opacity: 0.4; }
-  .empty-state p { font-size: 12px; max-width: 180px; line-height: 1.5; }
+/* ── Result cards ─────────────────────────────────────────── */
+.model-card{border:2px solid var(--accent2);margin-bottom:14px;border-radius:var(--radius);overflow:hidden;}
+.model-card-header{background:var(--bg);padding:8px 12px;border-bottom:1px solid var(--border2);display:flex;justify-content:space-between;align-items:center;}
+.model-card-name{font-family:var(--mono);font-weight:600;color:var(--accent2);font-size:12px;}
+.result-card{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);margin-bottom:8px;overflow:hidden;}
+.result-card-head{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-bottom:1px solid var(--border2);background:var(--bg);}
+.result-label{font-size:13px;font-weight:600;}
+.iou-badge{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px;}
+.iou-good{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);}
+.iou-mid{background:color-mix(in srgb,var(--accent3) 15%,transparent);color:var(--accent3);border:1px solid color-mix(in srgb,var(--accent3) 30%,transparent);}
+.iou-bad{background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 30%,transparent);}
+.result-card-body{padding:8px 10px;}
+.bbox-compare{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px;}
+.bbox-col .col-title{color:var(--text3);margin-bottom:2px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;}
+.bbox-val{font-family:var(--mono);font-size:11px;color:var(--text);}
+.pred-edit{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px;}
+.pred-edit input{padding:3px 5px;font-size:11px;height:24px;}
+.pred-edit-label{font-size:9px;color:var(--text3);text-align:center;margin-top:1px;}
+.stats-row{display:flex;gap:5px;margin-bottom:5px;}
+.stat-item{flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:6px;padding:4px 5px;text-align:center;}
+.stat-item .sv{font-family:var(--mono);font-size:12px;font-weight:600;}
+.stat-item .sk{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:1px;}
+.score-bar-wrap{margin-top:4px;}
+.score-bar-label{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:2px;}
+.score-bar-bg{background:var(--border2);height:4px;border-radius:3px;overflow:hidden;}
+.score-bar-fill{height:100%;border-radius:3px;transition:width .4s ease;}
+.log-box{background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius);padding:7px 9px;font-family:var(--mono);font-size:10px;color:var(--text3);max-height:110px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;margin-top:5px;}
+.oob-tag{display:inline-block;font-size:9px;font-family:var(--mono);padding:1px 5px;border-radius:3px;background:color-mix(in srgb,var(--accent3) 15%,transparent);color:var(--accent3);border:1px solid color-mix(in srgb,var(--accent3) 35%,transparent);margin-left:5px;vertical-align:middle;}
+.pred-label-tag{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px;}
+.pred-label-val{color:var(--accent2);font-style:italic;}
+.raw-response{font-family:var(--mono);font-size:10px;white-space:pre-wrap;word-break:break-all;}
 
-  .spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid color-mix(in srgb, var(--accent) 30%, transparent); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 5px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
+/* ── Summary strip ─────────────────────────────────────── */
+.summary-strip{display:flex;gap:1px;margin-bottom:9px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border2);}
+.summary-strip .seg{flex:1;padding:5px 4px;text-align:center;background:var(--surface2);}
+.summary-strip .seg .sv{font-family:var(--mono);font-size:13px;font-weight:700;}
+.summary-strip .seg .sk{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;}
+.summary-strip .seg.green .sv{color:var(--accent);}
+.summary-strip .seg.yellow .sv{color:var(--accent3);}
+.summary-strip .seg.red .sv{color:var(--danger);}
 
-  .status-bar { padding: 5px 12px; background: var(--bg); border-top: 1px solid var(--border2); font-family: var(--mono); font-size: 10px; color: var(--text3); display: flex; gap: 14px; flex-shrink: 0; }
-  .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--text3); margin-right: 4px; vertical-align: middle; }
-  .status-dot.ok   { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
-  .status-dot.busy { background: var(--accent3); animation: pulse 1s infinite; }
-  .status-dot.err  { background: var(--danger); }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+/* ── History ────────────────────────────────────────────── */
+.sess-item{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);margin-bottom:7px;overflow:hidden;cursor:pointer;transition:border-color .15s;}
+.sess-item:hover{border-color:var(--accent2);}
+.sess-item.active-sess{border-color:var(--accent);}
+.sess-head{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--bg);}
+.sess-title{font-size:12px;font-weight:600;}
+.sess-meta{font-size:10px;color:var(--text3);font-family:var(--mono);}
+.sess-body{padding:6px 10px;font-size:11px;color:var(--text3);}
 
-  .scene-btns { display: flex; gap: 5px; flex-wrap: wrap; padding: 8px 14px 0; }
-  .scene-btn { font-size: 11px; padding: 4px 9px; border-radius: 4px; background: var(--surface2); border: 1px solid var(--border2); color: var(--text3); cursor: pointer; transition: all 0.12s; }
-  .scene-btn:hover, .scene-btn.active { border-color: var(--accent2); color: var(--text); background: color-mix(in srgb, var(--accent2) 10%, transparent); }
+/* ── Empty ──────────────────────────────────────────────── */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text3);text-align:center;gap:7px;}
+.empty-state .icon{font-size:28px;opacity:.4;}
+.empty-state p{font-size:12px;max-width:180px;line-height:1.5;}
 
-  .section-divider { padding: 8px 14px 3px; font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; font-family: var(--mono); }
-
-  .toggle-row { display: flex; align-items: center; gap: 8px; }
-  .toggle-label { font-size: 11px; color: var(--text3); flex: 1; }
-  .toggle { position: relative; width: 30px; height: 17px; background: var(--border2); border-radius: 9px; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
-  .toggle.on { background: var(--accent2); }
-  .toggle::after { content: ''; position: absolute; width: 11px; height: 11px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.2s; }
-  .toggle.on::after { transform: translateX(13px); }
-
-  .hint { font-size: 10px; color: var(--text3); margin-top: 3px; line-height: 1.5; }
-
-  .summary-strip { display: flex; gap: 1px; margin-bottom: 10px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border2); }
-  .summary-strip .seg { flex: 1; padding: 6px 4px; text-align: center; background: var(--surface2); }
-  .summary-strip .seg .sv { font-family: var(--mono); font-size: 14px; font-weight: 700; }
-  .summary-strip .seg .sk { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
-  .summary-strip .seg.green .sv { color: var(--accent); }
-  .summary-strip .seg.yellow .sv { color: var(--accent3); }
-  .summary-strip .seg.red .sv { color: var(--danger); }
-
-  .edit-toggle { font-size: 10px; color: var(--accent2); cursor: pointer; text-decoration: underline; }
-  .edit-toggle:hover { color: var(--text); }
-
-  /* Out-of-bounds warning tag */
-  .oob-tag { display: inline-block; font-size: 9px; font-family: var(--mono); padding: 1px 5px; border-radius: 3px; background: color-mix(in srgb, var(--accent3) 15%, transparent); color: var(--accent3); border: 1px solid color-mix(in srgb, var(--accent3) 35%, transparent); margin-left: 6px; vertical-align: middle; }
-
-  ::-webkit-scrollbar { width: 4px; height: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
-
-  /* Prompt area with copy btn */
-  .prompt-wrap { position: relative; }
-  .prompt-copy { position: absolute; top: 4px; right: 4px; font-size: 10px; padding: 2px 7px; background: var(--surface2); border: 1px solid var(--border2); color: var(--text3); border-radius: 4px; cursor: pointer; z-index: 1; }
-  .prompt-copy:hover { color: var(--text); }
-
-  .raw-response { font-family: var(--mono); font-size: 10px; white-space: pre-wrap; word-break: break-all; }
-
-  .pred-label-tag { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-top: 4px; }
-  .pred-label-val { color: var(--accent2); font-style: italic; }
-
-  .model-card { border: 2px solid var(--accent2); margin-bottom: 20px; border-radius: var(--radius); overflow: hidden; }
-  .model-card-header { background: var(--bg); padding: 10px 14px; border-bottom: 1px solid var(--border2); display: flex; justify-content: space-between; align-items: center; }
-  .model-card-name { font-family: var(--mono); font-weight: 600; color: var(--accent2); }
-
-  /* Sidebar overrides for shared components */
-  .panel .server-card {
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: var(--radius);
-    background: var(--surface2);
-  }
-  .panel .server-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
-  .panel .server-type-select,
-  .panel .url-input,
-  .panel #fetchBtn {
-    width: 100% !important;
-    height: 32px;
-  }
-  .panel .models-grid {
-    grid-template-columns: 1fr 1fr;
-    max-height: 200px;
-    overflow-y: auto;
-    padding: 4px;
-    border: 1px solid var(--border2);
-    border-radius: var(--radius);
-    background: var(--bg);
-  }
-  .panel .model-item {
-    padding: 4px 8px;
-  }
-  .panel .model-name {
-    font-size: 11px;
-  }
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+::-webkit-scrollbar-thumb:hover{background:var(--text3);}
 </style>
 </head>
 <body>
 
+<!-- ── Header ──────────────────────────────────────────────── -->
 <header>
-  <div class="logo">⬡ BBoxBench</div>
-  <div class="tagline">LLM 边界框标定能力评测工具</div>
+  <div class="logo">⬡ BBoxBench Pro</div>
+  <div class="tagline">LLM 边界框标定测试台</div>
   <div class="hdr-actions">
     <div class="theme-switcher">
       <button class="theme-btn active" data-theme-btn="dark">暗色</button>
       <button class="theme-btn" data-theme-btn="light">亮色</button>
       <button class="theme-btn" data-theme-btn="system">系统</button>
     </div>
-    <div class="badge">LiteLLM / Anthropic</div>
+    <button class="btn-purple" onclick="exportSessions()" title="导出所有历史记录 JSON">↑ 导出</button>
+    <label class="btn-amber" style="cursor:pointer" title="导入历史记录 JSON">↓ 导入<input type="file" accept=".json" style="display:none" onchange="importSessions(event)"></label>
+    <div class="badge">多模型 · 历史回放</div>
   </div>
 </header>
 
 <div class="layout">
 
-  <!-- LEFT PANEL -->
-  <div class="panel">
-    <div class="panel-title">模型配置</div>
+<!-- ══ LEFT CONFIG PANEL ══════════════════════════════════ -->
+<div class="lpanel">
+  <div class="panel-title">模型配置</div>
+  <div class="fg">
     <div class="server-card">
       <div class="server-row">
-        <select id="serverType" class="server-type-select"></select>
-        <input class="url-input" id="serverUrl" type="text" value="http://localhost:1234" />
-        <button id="fetchBtn" style="width: 100%; margin-top: 8px;">获取模型 →</button>
+        <select id="serverType" style="width:100%"></select>
+        <input id="serverUrl" type="text" value="http://localhost:1234" style="width:100%;font-family:var(--mono);font-size:12px;"/>
+        <button id="fetchBtn" class="btn-outline" style="width:100%;margin-top:4px;">获取模型列表 →</button>
       </div>
-      <div class="server-row" id="apiKeyRow" style="display:none; flex-direction: column; align-items: flex-start;">
-        <span style="font-size:12px;color:var(--text2);white-space:nowrap; margin-bottom: 4px;" id="apiKeyLabel">API Key</span>
-        <input class="api-key-input" id="apiKey" type="password" placeholder="sk-..." />
+      <div id="apiKeyRow" style="display:none;margin-top:8px;">
+        <div class="fl" id="apiKeyLabel">API Key</div>
+        <input id="apiKey" type="password" placeholder="sk-..."/>
       </div>
       <div class="hint" id="serverHint"></div>
       <div id="fetchError" class="error-msg" style="display:none;"></div>
     </div>
+    <div class="fl" style="margin-top:8px;">可用模型 <span id="modelCount" style="opacity:.6;font-style:italic;font-weight:400"></span></div>
+    <div id="modelsGrid" class="models-grid"><div class="empty-msg">请先点击「获取模型列表」</div></div>
+  </div>
 
-    <div class="field-group">
-      <div class="label">可用模型 <span id="modelCount" style="font-style:italic;font-weight:400;opacity:0.7;"></span></div>
-      <div id="modelsGrid" class="models-grid"><div class="empty-msg">请先点击「获取模型」</div></div>
-    </div>
-
-    <div class="field-group">
-      <div class="row2">
-        <div>
-          <div class="field-label">Temperature</div>
-          <input type="number" id="temperature" value="0" min="0" max="2" step="0.1">
-        </div>
-        <div>
-          <div class="field-label">Max Tokens</div>
-          <input type="number" id="maxTokens" value="4096" min="256" max="32000">
-        </div>
-      </div>
-    </div>
-
-    <div class="field-group">
-      <div class="toggle-row">
-        <div class="toggle-label">发送 Canvas 图片（Vision 模式）</div>
-        <div class="toggle on" id="visionToggle" onclick="toggleVision()"></div>
-      </div>
-      <div class="hint" style="margin-top:5px">关闭则仅发送文字描述，测试纯文本空间推理</div>
-    </div>
-<div class="section-divider">测试场景</div>
-
-    <div class="scene-btns">
-      <div class="scene-btn" onclick="loadScene('letters')" data-scene="letters">字母 ABC</div>
-      <div class="scene-btn" onclick="loadScene('shapes')" data-scene="shapes">几何图形</div>
-      <div class="scene-btn" onclick="loadScene('emoji')" data-scene="emoji">Emoji</div>
-      <div class="scene-btn" onclick="loadScene('mixed')" data-scene="mixed">混合对象</div>
-      <div class="scene-btn active" onclick="loadScene('random')" data-scene="random">随机场景</div>
-    </div>
-
-    <div class="field-group" style="margin-top:8px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-        <div class="field-label" style="margin:0">系统提示词</div>
-        <span class="edit-toggle" onclick="resetPrompt()">↺ 恢复默认</span>
-      </div>
-      <div class="prompt-wrap">
-        <textarea id="sysPrompt" rows="7"></textarea>
-        <button class="prompt-copy" onclick="copyPrompt()">复制</button>
-      </div>
-      <div class="hint">可直接编辑上方提示词后运行</div>
-    </div>
-
-    <div class="field-group">
-      <div class="field-label">IoU 判定阈值</div>
-      <input type="range" id="iouThreshold" min="0.1" max="0.9" step="0.05" value="0.5" oninput="document.getElementById(&#39;iouVal&#39;).textContent=this.value;recomputeIfDone()" style="padding:0;border:none;background:none;accent-color:var(--accent2)">
-      <div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:2px">阈值: <span id="iouVal">0.5</span></div>
-    </div>
-
-    <div class="field-group" style="display:flex;gap:8px;">
-      <button class="btn-primary" id="runBtn" onclick="runBenchmark()" style="flex:1">▶ 运行测试</button>
-      <button class="btn-reset" id="resetBtn" onclick="resetAll()" style="flex:0 0 auto;width:auto;padding:9px 14px" title="清除结果重新开始">✕ 重置</button>
+  <div class="fg">
+    <div class="row2">
+      <div><div class="fl">Temperature</div><input type="number" id="temperature" value="0" min="0" max="2" step="0.1"/></div>
+      <div><div class="fl">Max Tokens</div><input type="number" id="maxTokens" value="4096" min="256" max="32000"/></div>
     </div>
   </div>
 
-  <!-- CENTER CANVAS -->
-  <div class="canvas-area">
-    <div class="canvas-toolbar">
-      <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">虚拟空间 <span id="canvasSizeLabel" style="color:var(--text)">600×450</span></span>
-      <div class="spacer"></div>
-      <button class="btn-sm active" id="gtBtn" onclick="toggleGroundTruth()">GT 框</button>
-      <div id="predBtnsContainer" style="display:contents"></div>
-      <button class="btn-sm" onclick="toggleLabels()" id="labelBtn">标签</button>
-      <button class="btn-outline" onclick="redrawScene()">↺ 重绘</button>
-    </div>
-    <div class="canvas-wrap" id="canvasWrap">
-      <!-- outer div is bigger than canvas to allow overflow display -->
-      <div class="canvas-outer" id="canvasOuter" style="position: relative; width: 840px; height: 610px;">
-        <canvas id="mainCanvas" width="600" height="450" style="position: absolute; left: 120px; top: 80px;"></canvas>
-        <canvas id="overlayCanvas" width="840" height="610" style="position:absolute;top:0;left:0;pointer-events:none;z-index:2;"></canvas>
-        <!-- boundary marker drawn on top -->
-        <canvas id="boundaryCanvas" width="840" height="610" style="position:absolute;top:0;left:0;pointer-events:none;z-index:3;"></canvas>
-      </div>
-    </div>
-    <div class="status-bar">
-      <span><span class="status-dot ok" id="statusDot"></span><span id="statusText">完成 · 0/3 通过 · 114201ms</span></span>
-      <span id="statusExtra" style="color:var(--text3)"></span>
+  <div class="fg">
+    <div class="toggle-row">
+      <div class="toggle-label">发送 Canvas 图片（Vision 模式）</div>
+      <div class="toggle on" id="visionToggle" onclick="toggleVision()"></div>
     </div>
   </div>
 
-  <!-- RIGHT RESULTS -->
-  <div class="results-panel">
-    <div class="panel-title" style="display:flex;align-items:center;justify-content:space-between">
-      <span>标定结果</span>
-      <span style="font-size:10px;color:var(--text3);font-weight:normal;text-transform:none;letter-spacing:0">点击数值可手动修改</span>
-    </div>
-    <div class="results-body" id="resultsBody"><div class="summary-strip">
-    <div class="seg red">
-      <div class="sv">0/3</div><div class="sk">通过</div>
-    </div>
-    <div class="seg">
-      <div class="sv" style="color:var(--accent2)">0.027</div><div class="sk">平均IoU</div>
-    </div>
-    <div class="seg">
-      <div class="sv" style="color:var(--accent3)">1</div><div class="sk">越界框</div>
-    </div>
-    <div class="seg">
-      <div class="sv" style="color:var(--text3)">114201ms</div><div class="sk">耗时</div>
-    </div>
-  </div><div class="result-card">
-      <div class="result-card-head">
-        <div class="result-label">① <span style="color:var(--text3);font-size:11px;font-weight:400">标号①</span></div>
-        <div class="iou-badge iou-bad">IoU 0.000</div>
-      </div>
-      <div class="result-card-body">
-        <div class="score-bar-wrap">
-          <div class="score-bar-label"><span>交并比</span><span>0.0%</span></div>
-          <div class="score-bar-bg"><div class="score-bar-fill" style="width:0%;background:var(--danger)"></div></div>
-        </div><div class="pred-label-tag" style="margin-top:7px">模型标注内容: <span class="pred-label-val">标号①文本和圆圈</span></div><div class="bbox-compare" style="margin-top:8px">
-        <div class="bbox-col">
-          <div class="col-title">Ground Truth</div>
-          <div class="bbox-val">x:361 y:95<br>w:142 h:103</div>
-        </div>
-        <div class="bbox-col">
-          <div class="col-title" style="display:flex;align-items:center;justify-content:space-between">
-            <span>预测</span>
-          </div>
-          <div class="bbox-val">x:478 y:230<br>w:112 h:80</div>
-        </div>
-      </div><div class="stats-row">
-          <div class="stat-item">
-            <div class="sv" style="color:var(--danger)">160px</div>
-            <div class="sk">中心偏差</div>
-          </div>
-          <div class="stat-item">
-            <div class="sv" style="color:var(--danger)">39%</div>
-            <div class="sk">面积误差</div>
-          </div>
-          <div class="stat-item">
-            <div class="sv" style="color:var(--danger)">✗ 失败</div>
-            <div class="sk">结果</div>
-          </div>
-        </div><details style="margin-top:6px">
-        <summary style="font-size:10px;color:var(--accent2);cursor:pointer;user-select:none;list-style:none">✎ 手动修改预测值重新校验</summary>
-        <div style="margin-top:6px">
-          <div class="pred-edit">
-            <div><input id="ep_x__" type="number" value="478" placeholder="x"><div class="pred-edit-label">x</div></div>
-            <div><input id="ep_y__" type="number" value="230" placeholder="y"><div class="pred-edit-label">y</div></div>
-            <div><input id="ep_w__" type="number" value="112" placeholder="w"><div class="pred-edit-label">w</div></div>
-            <div><input id="ep_h__" type="number" value="80" placeholder="h"><div class="pred-edit-label">h</div></div>
-          </div>
-          <div style="margin-top:4px">
-            <div class="field-label">标注内容描述</div>
-            <input id="ep_l__" type="text" value="标号①文本和圆圈" placeholder="该框标记的内容..." style="height:26px;font-size:11px;padding:3px 7px">
-          </div>
-          <button class="btn-apply" onclick="applyEdit(&#39;①&#39;)">↻ 应用并重新计算 IoU</button>
-        </div>
-      </details></div></div><div class="result-card">
-      <div class="result-card-head">
-        <div class="result-label">② <span style="color:var(--text3);font-size:11px;font-weight:400">标号②</span></div>
-        <div class="iou-badge iou-bad">IoU 0.081</div>
-      </div>
-      <div class="result-card-body">
-        <div class="score-bar-wrap">
-          <div class="score-bar-label"><span>交并比</span><span>8.1%</span></div>
-          <div class="score-bar-bg"><div class="score-bar-fill" style="width:8.119203284172114%;background:var(--danger)"></div></div>
-        </div><div class="pred-label-tag" style="margin-top:7px">模型标注内容: <span class="pred-label-val">标号②绿色圆圈</span></div><div class="bbox-compare" style="margin-top:8px">
-        <div class="bbox-col">
-          <div class="col-title">Ground Truth</div>
-          <div class="bbox-val">x:135 y:208<br>w:104 h:136</div>
-        </div>
-        <div class="bbox-col">
-          <div class="col-title" style="display:flex;align-items:center;justify-content:space-between">
-            <span>预测</span>
-          </div>
-          <div class="bbox-val">x:150 y:320<br>w:130 h:110</div>
-        </div>
-      </div><div class="stats-row">
-          <div class="stat-item">
-            <div class="sv" style="color:var(--danger)">103px</div>
-            <div class="sk">中心偏差</div>
-          </div>
-          <div class="stat-item">
-            <div class="sv" style="color:var(--accent)">1%</div>
-            <div class="sk">面积误差</div>
-          </div>
-          <div class="stat-item">
-            <div class="sv" style="color:var(--danger)">✗ 失败</div>
-            <div class="sk">结果</div>
-          </div>
-        </div><details style="margin-top:6px">
-        <summary style="font-size:10px;color:var(--accent2);cursor:pointer;user-select:none;list-style:none">✎ 手动修改预测值重新校验</summary>
-        <div style="margin-top:6px">
-          <div class="pred-edit">
-            <div><input id="ep_x__" type="number" value="150" placeholder="x"><div class="pred-edit-label">x</div></div>
-            <div><input id="ep_y__" type="number" value="320" placeholder="y"><div class="pred-edit-label">y</div></div>
-            <div><input id="ep_w__" type="number" value="130" placeholder="w"><div class="pred-edit-label">w</div></div>
-            <div><input id="ep_h__" type="number" value="110" placeholder="h"><div class="pred-edit-label">h</div></div>
-          </div>
-          <div style="margin-top:4px">
-            <div class="field-label">标注内容描述</div>
-            <input id="ep_l__" type="text" value="标号②绿色圆圈" placeholder="该框标记的内容..." style="height:26px;font-size:11px;padding:3px 7px">
-          </div>
-          <button class="btn-apply" onclick="applyEdit(&#39;②&#39;)">↻ 应用并重新计算 IoU</button>
-        </div>
-      </details></div></div><div class="result-card">
-      <div class="result-card-head">
-        <div class="result-label">③ <span style="color:var(--text3);font-size:11px;font-weight:400">标号③</span><span class="oob-tag">OOB</span></div>
-        <div class="iou-badge iou-bad">IoU 0.000</div>
-      </div>
-      <div class="result-card-body">
-        <div class="score-bar-wrap">
-          <div class="score-bar-label"><span>交并比</span><span>0.0%</span></div>
-          <div class="score-bar-bg"><div class="score-bar-fill" style="width:0%;background:var(--danger)"></div></div>
-        </div><div class="pred-label-tag" style="margin-top:7px">模型标注内容: <span class="pred-label-val">标号③紫色方框</span></div><div class="bbox-compare" style="margin-top:8px">
-        <div class="bbox-col">
-          <div class="col-title">Ground Truth</div>
-          <div class="bbox-val">x:324 y:279<br>w:143 h:125</div>
-        </div>
-        <div class="bbox-col">
-          <div class="col-title" style="display:flex;align-items:center;justify-content:space-between">
-            <span>预测</span>
-          </div>
-          <div class="bbox-val">x:348 y:509<br>w:194 h:91</div>
-        </div>
-      </div><div class="stats-row">
-          <div class="stat-item">
-            <div class="sv" style="color:var(--danger)">219px</div>
-            <div class="sk">中心偏差</div>
-          </div>
-          <div class="stat-item">
-            <div class="sv" style="color:var(--accent)">1%</div>
-            <div class="sk">面积误差</div>
-          </div>
-          <div class="stat-item">
-            <div class="sv" style="color:var(--danger)">✗ 失败</div>
-            <div class="sk">结果</div>
-          </div>
-        </div><details style="margin-top:6px">
-        <summary style="font-size:10px;color:var(--accent2);cursor:pointer;user-select:none;list-style:none">✎ 手动修改预测值重新校验</summary>
-        <div style="margin-top:6px">
-          <div class="pred-edit">
-            <div><input id="ep_x__" type="number" value="348" placeholder="x"><div class="pred-edit-label">x</div></div>
-            <div><input id="ep_y__" type="number" value="509" placeholder="y"><div class="pred-edit-label">y</div></div>
-            <div><input id="ep_w__" type="number" value="194" placeholder="w"><div class="pred-edit-label">w</div></div>
-            <div><input id="ep_h__" type="number" value="91" placeholder="h"><div class="pred-edit-label">h</div></div>
-          </div>
-          <div style="margin-top:4px">
-            <div class="field-label">标注内容描述</div>
-            <input id="ep_l__" type="text" value="标号③紫色方框" placeholder="该框标记的内容..." style="height:26px;font-size:11px;padding:3px 7px">
-          </div>
-          <button class="btn-apply" onclick="applyEdit(&#39;③&#39;)">↻ 应用并重新计算 IoU</button>
-        </div>
-      </details></div></div><div style="margin-top:8px">
-    <div class="field-label" style="padding:0 0 4px">模型原始响应</div>
-    <div class="log-box"><span class="raw-response">{
-  "boxes": [
-    {"id": "①", "label": "标号①文本和圆圈", "x": 478, "y": 230, "w": 112, "h": 80},
-    {"id": "②", "label": "标号②绿色圆圈", "x": 150, "y": 320, "w": 130, "h": 110},
-    {"id": "③", "label": "标号③紫色方框", "x": 348, "y": 509, "w": 194, "h": 91}
-  ]
-}</span></div>
-  </div></div>
+  <div class="section-divider">测试场景</div>
+  <div class="scene-btns">
+    <div class="scene-btn active" onclick="loadScene('letters')" data-scene="letters">字母 ABC</div>
+    <div class="scene-btn" onclick="loadScene('shapes')" data-scene="shapes">几何图形</div>
+    <div class="scene-btn" onclick="loadScene('emoji')" data-scene="emoji">Emoji</div>
+    <div class="scene-btn" onclick="loadScene('mixed')" data-scene="mixed">混合对象</div>
+    <div class="scene-btn" onclick="loadScene('random')" data-scene="random">随机场景</div>
   </div>
 
+  <div class="fg">
+    <div class="fl">背景图片（JPG，≤2MB）</div>
+    <div class="bg-upload-zone" id="bgUploadZone">
+      <input type="file" accept="image/jpeg,image/jpg" onchange="loadBgImage(event)">
+      <div class="uz-text">点击或拖入 JPG 图片<br><b>自动缩放为 600×450 背景</b></div>
+    </div>
+    <img id="bgPreview" class="bg-preview" alt="背景预览">
+    <div id="bgMeta" class="bg-meta"></div>
+    <div id="bgOpacityRow" class="bg-opacity-row" style="display:none">
+      <label>透明度</label>
+      <input type="range" id="bgOpacity" min="0.1" max="1" step="0.05" value="1"
+             oninput="document.getElementById('bgOpVal').textContent=Math.round(this.value*100)+'%';redrawScene()"
+             style="flex:1;padding:0;border:none;background:none;accent-color:var(--accent2)">
+      <span id="bgOpVal" style="font-family:var(--mono);font-size:10px;color:var(--text3);min-width:30px">100%</span>
+    </div>
+    <button id="bgClearBtn" onclick="clearBgImage()" style="display:none;margin-top:5px;width:100%;font-size:11px;padding:4px;background:color-mix(in srgb,var(--danger) 12%,transparent);border:1px solid color-mix(in srgb,var(--danger) 30%,transparent);color:var(--danger);border-radius:4px;cursor:pointer;">✕ 移除背景图</button>
+  </div>
+
+  <div class="fg">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div class="fl" style="margin:0">系统提示词</div>
+      <span class="edit-toggle" onclick="resetPrompt()">↺ 恢复默认</span>
+    </div>
+    <div class="prompt-wrap">
+      <textarea id="sysPrompt" rows="7"></textarea>
+      <button class="prompt-copy" onclick="copyPrompt()">复制</button>
+    </div>
+  </div>
+
+  <div class="fg">
+    <div class="fl">IoU 合格阈值</div>
+    <input type="range" id="iouThreshold" min="0.1" max="0.9" step="0.05" value="0.5"
+           oninput="document.getElementById('iouVal').textContent=this.value;recomputeIfDone()"
+           style="padding:0;border:none;background:none;accent-color:var(--accent2)">
+    <div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:2px">阈值: <span id="iouVal">0.5</span></div>
+  </div>
+
+  <div class="fg" style="display:flex;gap:7px;">
+    <button class="btn-primary" id="runBtn" onclick="runBenchmark()" style="flex:1">▶ 运行测试</button>
+    <button class="btn-danger" onclick="resetAll()" title="清除当前结果">✕</button>
+  </div>
 </div>
 
-<script src="llm.js"></script>
+<!-- ══ CENTER CANVAS ══════════════════════════════════════ -->
+<div class="canvas-area">
+  <div class="canvas-toolbar">
+    <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">虚拟空间 <span id="canvasSizeLabel" style="color:var(--text)">600×450</span></span>
+    <div class="spacer"></div>
+    <button class="btn-sm active" id="gtBtn" onclick="toggleGroundTruth()">GT 框</button>
+    <div id="predBtnsContainer" style="display:contents"></div>
+    <button class="btn-sm active" id="labelBtn" onclick="toggleLabels()">标签</button>
+    <button class="btn-outline" onclick="redrawScene()">↺ 重绘</button>
+  </div>
+  <div class="canvas-wrap">
+    <div class="canvas-outer" id="canvasOuter">
+      <canvas id="mainCanvas" width="600" height="450" style="position:absolute;border-radius:3px;"></canvas>
+      <canvas id="overlayCanvas" style="position:absolute;top:0;left:0;pointer-events:none;z-index:2;"></canvas>
+      <canvas id="boundaryCanvas" style="position:absolute;top:0;left:0;pointer-events:none;z-index:3;"></canvas>
+    </div>
+  </div>
+  <div class="status-bar">
+    <span><span class="status-dot" id="statusDot"></span><span id="statusText">就绪</span></span>
+    <span id="statusExtra" style="color:var(--text3)"></span>
+  </div>
+</div>
+
+<!-- ══ RIGHT PANEL ════════════════════════════════════════ -->
+<div class="results-panel">
+  <div class="tab-bar">
+    <div class="tab active" onclick="switchTab('current')" id="tab-current">当前结果</div>
+    <div class="tab" onclick="switchTab('history')" id="tab-history">历史 <span id="historyCount" style="opacity:.6">(0)</span></div>
+  </div>
+  <div class="tab-panel active" id="panel-current">
+    <div class="empty-state" id="currentEmpty">
+      <div class="icon">◎</div>
+      <p>选择场景、勾选模型后运行，结果将在此显示</p>
+    </div>
+    <div id="currentResults"></div>
+  </div>
+  <div class="tab-panel" id="panel-history">
+    <div class="empty-state" id="historyEmpty">
+      <div class="icon">⏱</div>
+      <p>暂无历史记录<br>运行测试后自动保存</p>
+    </div>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+</div><!-- .layout -->
+
 <script>
-// ─── Constants ────────────────────────────────────────────────────────────
-const serverTypeEl = document.getElementById("serverType");
-const serverUrlEl = document.getElementById("serverUrl");
-const apiKeyRowEl = document.getElementById("apiKeyRow");
-const serverHintEl = document.getElementById("serverHint");
-const fetchBtn = document.getElementById("fetchBtn");
-const modelsGridEl = document.getElementById("modelsGrid");
+// ════════════════════════════════════════════════════════
+// SERVERS CONFIG (inline from llm.js)
+// ════════════════════════════════════════════════════════
+const SERVERS={
+  ollama:{group:'本地服务',label:'Ollama',defaultUrl:'http://localhost:11434',needsKey:false,hint:'本地服务 · 默认端口 <code>11434</code>',modelsPath:'/api/tags',modelsExtract:d=>(d.models||[]).map(m=>m.name||m.model).filter(Boolean),completionPath:'/api/chat',buildBody:(model,messages,stream)=>({model,messages,stream}),streamFormat:'ndjson'},
+  lmstudio:{group:'本地服务',label:'LM Studio',defaultUrl:'http://localhost:1234',needsKey:false,hint:'本地服务 · 默认端口 <code>1234</code>',modelsPath:'/v1/models',modelsExtract:d=>(d.data||[]).map(m=>m.id).filter(Boolean),completionPath:'/v1/chat/completions',buildBody:(model,messages,stream)=>({model,messages,stream,temperature:0.7,max_tokens:2048}),streamFormat:'sse'},
+  llamacpp:{group:'本地服务',label:'llama.cpp',defaultUrl:'http://localhost:8080',needsKey:false,hint:'本地服务 · 默认端口 <code>8080</code>',modelsPath:'/v1/models',modelsExtract:d=>(d.data||[]).map(m=>m.id).filter(Boolean),completionPath:'/v1/chat/completions',buildBody:(model,messages,stream)=>({model,messages,stream,temperature:0.7,max_predict:2048}),streamFormat:'sse'},
+  jan:{group:'本地服务',label:'Jan',defaultUrl:'http://localhost:1337',needsKey:false,hint:'本地服务 · 默认端口 <code>1337</code>',modelsPath:'/v1/models',modelsExtract:d=>(d.data||[]).map(m=>m.id).filter(Boolean),completionPath:'/v1/chat/completions',buildBody:(model,messages,stream)=>({model,messages,stream,temperature:0.7,max_tokens:2048}),streamFormat:'sse'},
+  litellm:{group:'本地服务',label:'LiteLLM',defaultUrl:'http://localhost:4000',needsKey:'optional',hint:'本地/自托管 · 默认端口 <code>4000</code> · 统一代理 OpenAI / Claude / Gemini 等 100+ 模型',modelsPath:'/v1/models',modelsExtract:d=>(d.data||[]).map(m=>m.id).filter(Boolean),completionPath:'/v1/chat/completions',buildBody:(model,messages,stream)=>({model,messages,stream,max_tokens:2048}),streamFormat:'sse'},
+  openai:{group:'在线服务',label:'OpenAI',defaultUrl:'https://api.openai.com',needsKey:true,hint:'在线服务 · <a href="https://platform.openai.com/api-keys" target="_blank">获取 API Key</a> · 视觉模型支持图片',modelsPath:'/v1/models',modelsExtract:d=>(d.data||[]).map(m=>m.id).filter(Boolean),completionPath:'/v1/chat/completions',buildBody:(model,messages,stream)=>({model,messages,stream,max_tokens:2048}),streamFormat:'sse'},
+  nvidia:{group:'在线服务',label:'NVIDIA NIM',defaultUrl:'https://integrate.api.nvidia.com',needsKey:true,hint:'在线服务 · <a href="https://build.nvidia.com" target="_blank">获取 API Key</a> · 前缀 <code>nvapi-</code>',modelsPath:'/v1/models',modelsExtract:d=>(d.data||[]).map(m=>m.id).filter(Boolean),completionPath:'/v1/chat/completions',buildBody:(model,messages,stream)=>({model,messages,stream,max_tokens:2048}),streamFormat:'sse'},
+  anthropic:{group:'在线服务',label:'Anthropic',defaultUrl:'https://api.anthropic.com',needsKey:true,hint:'在线服务 · <a href="https://console.anthropic.com/" target="_blank">获取 API Key</a>',modelsPath:'/v1/models',modelsExtract:d=>(d.data||[]).map(m=>m.id).filter(Boolean),completionPath:'/v1/messages',buildBody:(model,messages,stream)=>{const system=messages.find(m=>m.role==='system')?.content||'';const userMessages=messages.filter(m=>m.role!=='system').map(m=>{if(Array.isArray(m.content)){return{role:m.role,content:m.content.map(c=>{if(c.type==='image_url'){const base64=c.image_url.url.split(',')[1];const media_type=c.image_url.url.split(';')[0].split(':')[1];return{type:'image',source:{type:'base64',media_type,data:base64}};}return c;})}}return m;});return{model,system,messages:userMessages,max_tokens:4096,stream};},streamFormat:'sse',customHeaders:(key)=>({'x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'})},
+  anthropic_compat:{group:'在线服务',label:'Anthropic (via proxy)',defaultUrl:'https://your-proxy.example.com',needsKey:'optional',hint:'需通过 OpenAI 兼容代理访问，直接请求官方端点会有 CORS 限制',modelsPath:'/v1/models',modelsExtract:d=>(d.data||[]).map(m=>m.id).filter(Boolean),completionPath:'/v1/chat/completions',buildBody:(model,messages,stream)=>({model,messages,stream,max_tokens:2048}),streamFormat:'sse'},
+  groq:{group:'在线服务',label:'Groq',defaultUrl:'https://api.groq.com',needsKey:true,hint:'在线服务 · <a href="https://console.groq.com/keys" target="_blank">获取 API Key</a>',modelsPath:'/openai/v1/models',modelsExtract:d=>(d.data||[]).map(m=>m.id).filter(Boolean),completionPath:'/openai/v1/chat/completions',buildBody:(model,messages,stream)=>({model,messages,stream,max_tokens:2048}),streamFormat:'sse'},
+  mistral:{group:'在线服务',label:'Mistral',defaultUrl:'https://api.mistral.ai',needsKey:true,hint:'在线服务 · <a href="https://console.mistral.ai/api-keys" target="_blank">获取 API Key</a>',modelsPath:'/v1/models',modelsExtract:d=>(d.data||[]).map(m=>m.id).filter(Boolean),completionPath:'/v1/chat/completions',buildBody:(model,messages,stream)=>({model,messages,stream,max_tokens:2048}),streamFormat:'sse'},
+  openrouter:{group:'在线服务',label:'OpenRouter',defaultUrl:'https://openrouter.ai',needsKey:true,hint:'在线服务 · <a href="https://openrouter.ai/keys" target="_blank">获取 API Key</a> · 支持多模态模型',modelsPath:'/api/v1/models',modelsExtract:d=>(d.data||[]).map(m=>m.id).filter(Boolean),completionPath:'/api/v1/chat/completions',buildBody:(model,messages,stream)=>({model,messages,stream,max_tokens:2048}),streamFormat:'sse'},
+  deepseek:{group:'在线服务',label:'DeepSeek',defaultUrl:'https://api.deepseek.com',needsKey:true,hint:'在线服务 · <a href="https://platform.deepseek.com/api_keys" target="_blank">获取 API Key</a>',modelsPath:'/v1/models',modelsExtract:d=>(d.data||[]).map(m=>m.id).filter(Boolean),completionPath:'/v1/chat/completions',buildBody:(model,messages,stream)=>({model,messages,stream,max_tokens:2048}),streamFormat:'sse'},
+  siliconflow:{group:'在线服务',label:'SiliconFlow',defaultUrl:'https://api.siliconflow.cn',needsKey:true,hint:'在线服务 · <a href="https://cloud.siliconflow.cn/account/ak" target="_blank">获取 API Key</a> · 国内可直连',modelsPath:'/v1/models',modelsExtract:d=>(d.data||[]).map(m=>m.id).filter(Boolean),completionPath:'/v1/chat/completions',buildBody:(model,messages,stream)=>({model,messages,stream,max_tokens:2048}),streamFormat:'sse'},
+  zhipu:{group:'在线服务',label:'智谱 GLM',defaultUrl:'https://open.bigmodel.cn/api/paas/v4',needsKey:true,hint:'在线服务 · <a href="https://open.bigmodel.cn/usercenter/apikeys" target="_blank">获取 API Key</a>',modelsPath:'/models',modelsExtract:d=>(d.data||[]).map(m=>m.id).filter(Boolean),completionPath:'/chat/completions',buildBody:(model,messages,stream)=>({model,messages,stream,max_tokens:2048}),streamFormat:'sse'},
+  custom:{group:'自定义',label:'自定义 OpenAI 兼容端点',defaultUrl:'http://localhost:8000',needsKey:'optional',hint:'自定义 OpenAI 兼容端点 · API Key 可留空',modelsPath:'/v1/models',modelsExtract:d=>(d.data||[]).map(m=>m.id).filter(Boolean),completionPath:'/v1/chat/completions',buildBody:(model,messages,stream)=>({model,messages,stream,max_tokens:2048}),streamFormat:'sse'},
+};
 
-let models = [];
-let selectedModels = new Set();
+// ════════════════════════════════════════════════════════
+// Constants
+// ════════════════════════════════════════════════════════
+const CW=600, CH=450, OFX=100, OFY=70;
+const COLORS={
+  get gt(){return gc('--accent');},
+  get pred(){return gc('--accent2');},
+  get miss(){return gc('--danger');},
+  get warn(){return gc('--accent3');}
+};
+function gc(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()||'#888';}
 
-renderServerSelect(serverTypeEl, 'lmstudio');
-serverTypeEl.addEventListener("change", () => applyServerProfile(serverTypeEl.value, serverUrlEl, serverHintEl, apiKeyRowEl, document.getElementById("apiKeyLabel")));
-applyServerProfile(serverTypeEl.value, serverUrlEl, serverHintEl, apiKeyRowEl, document.getElementById("apiKeyLabel"));
+// ════════════════════════════════════════════════════════
+// State
+// ════════════════════════════════════════════════════════
+const state={
+  scene:null, currentSceneName:null,
+  groundTruth:[],
+  showGT:true, showLabels:true,
+  visionEnabled:true, running:false,
+  allResults:null,       // {modelId: {results, elapsed, rawText}}
+  visibleModels:new Set(),
+  sessions:[],           // history
+  bgImageB64:null, bgImageObj:null
+};
 
-async function fetchModelsWrapper() {
-  const type = serverTypeEl.value;
-  const url = serverUrlEl.value;
-  const key = document.getElementById("apiKey").value.trim();
-  const errEl = document.getElementById("fetchError");
-  errEl.style.display = "none";
-  fetchBtn.disabled = true; fetchBtn.textContent = "获取中...";
+let models=[], selectedModels=new Set();
+
+// ════════════════════════════════════════════════════════
+// Server UI
+// ════════════════════════════════════════════════════════
+function renderServerSelect(selectEl,def){
+  const groups={};
+  for(const[k,c]of Object.entries(SERVERS)){
+    const g=c.group||'其他';
+    if(!groups[g])groups[g]=[];
+    groups[g].push({key:k,label:c.label});
+  }
+  selectEl.innerHTML='';
+  const order=['本地服务','在线服务','自定义'];
+  for(const gn of order){
+    if(!groups[gn])continue;
+    const og=document.createElement('optgroup');og.label=gn;
+    for(const s of groups[gn]){
+      const o=document.createElement('option');o.value=s.key;o.textContent=s.label;
+      if(s.key===def)o.selected=true;
+      og.appendChild(o);
+    }
+    selectEl.appendChild(og);
+  }
+}
+function applyServerProfile(type){
+  const p=SERVERS[type];if(!p)return;
+  document.getElementById('serverUrl').value=p.defaultUrl;
+  document.getElementById('serverHint').innerHTML=p.hint;
+  const kr=document.getElementById('apiKeyRow');
+  const kl=document.getElementById('apiKeyLabel');
+  if(p.needsKey===true){kr.style.display='block';kl.textContent='API Key';}
+  else if(p.needsKey==='optional'){kr.style.display='block';kl.textContent='API Key（可选）';}
+  else kr.style.display='none';
+}
+function getHeaders(type,key){
+  const p=SERVERS[type];
+  let h={'Content-Type':'application/json'};
+  if(p&&p.customHeaders)Object.assign(h,p.customHeaders(key));
+  else if(key)h['Authorization']=`Bearer ${key}`;
+  return h;
+}
+async function fetchModelsWrapper(){
+  const type=document.getElementById('serverType').value;
+  const url=document.getElementById('serverUrl').value;
+  const key=document.getElementById('apiKey').value.trim();
+  const errEl=document.getElementById('fetchError');
+  errEl.style.display='none';
+  const btn=document.getElementById('fetchBtn');
+  btn.disabled=true;btn.textContent='获取中...';
   selectedModels.clear();
-  await fetchModels(type, url, key, (m) => {
-    models = m;
-    renderModelsGrid(modelsGridEl, models, selectedModels, () => {
-      document.getElementById("runBtn").disabled = selectedModels.size === 0;
-    });
-    document.getElementById("modelCount").textContent = `(${models.length} 个)`;
-  }, (e) => {
-    errEl.textContent = `连接失败: ${e.message}`;
-    errEl.style.display = "block";
-  });
-  fetchBtn.disabled = false; fetchBtn.textContent = "获取模型 →";
+  const p=SERVERS[type];const base=url.trim().replace(/\/$/,'');
+  try{
+    const res=await fetch(`${base}${p.modelsPath}`,{headers:getHeaders(type,key)});
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    const data=await res.json();
+    models=p.modelsExtract(data);
+    if(!models.length)throw new Error('无可用模型');
+    renderModelsGrid();
+    document.getElementById('modelCount').textContent=`(${models.length} 个)`;
+  }catch(e){
+    errEl.textContent=`连接失败: ${e.message}`;errEl.style.display='block';
+  }
+  btn.disabled=false;btn.textContent='获取模型列表 →';
 }
-fetchBtn.addEventListener("click", fetchModelsWrapper);
-const CW = 600, CH = 450;
-// overflow padding so out-of-bound boxes are visible
-const OFX = 120, OFY = 80;
-
-const COLORS = {
-  get gt()   { return getThemeColor('--accent'); },
-  get pred() { return getThemeColor('--accent2'); },
-  get miss() { return getThemeColor('--danger'); },
-  get warn() { return getThemeColor('--accent3'); }
-};
-
-// ─── State ────────────────────────────────────────────────────────────────
-const state = {
-  scene: null,
-  groundTruth: [],
-  showGT: true,
-  visibleModels: new Set(),
-  showLabels: true,
-  visionEnabled: true,
-  running: false
-};
-
-// ─── Canvas Setup ─────────────────────────────────────────────────────────
-const mainCanvas     = document.getElementById('mainCanvas');
-const overlayCanvas  = document.getElementById('overlayCanvas');
-const boundaryCanvas = document.getElementById('boundaryCanvas');
-const ctx  = mainCanvas.getContext('2d');
-const octx = overlayCanvas.getContext('2d');
-const bctx = boundaryCanvas.getContext('2d');
-
-// Expand the outer container so overflow boxes can be seen
-const outer = document.getElementById('canvasOuter');
-outer.style.position = 'relative';
-outer.style.width  = (CW + OFX*2) + 'px';
-outer.style.height = (CH + OFY*2) + 'px';
-
-// mainCanvas sits offset inside the outer so there is padding around it
-mainCanvas.style.position = 'absolute';
-mainCanvas.style.left     = OFX + 'px';
-mainCanvas.style.top      = OFY + 'px';
-
-// overlayCanvas covers the FULL outer container starting at (0,0)
-// drawOverlay adds OFX/OFY when drawing so boxes align with mainCanvas
-overlayCanvas.style.position = 'absolute';
-overlayCanvas.style.left     = '0';
-overlayCanvas.style.top      = '0';
-overlayCanvas.width          = CW + OFX*2;
-overlayCanvas.height         = CH + OFY*2;
-
-// boundaryCanvas same — full outer, draws the canvas border guide
-boundaryCanvas.style.position = 'absolute';
-boundaryCanvas.style.left     = '0';
-boundaryCanvas.style.top      = '0';
-boundaryCanvas.width          = CW + OFX*2;
-boundaryCanvas.height         = CH + OFY*2;
-
-document.getElementById('canvasSizeLabel').textContent = `${CW}×${CH}`;
-
-// Draw boundary frame on boundaryCanvas
-function drawBoundary() {
-  bctx.clearRect(0,0,boundaryCanvas.width,boundaryCanvas.height);
-  bctx.save();
-  bctx.strokeStyle = 'rgba(255,255,255,0.12)';
-  bctx.lineWidth = 1;
-  bctx.setLineDash([4,4]);
-  bctx.strokeRect(OFX, OFY, CW, CH);
-  bctx.fillStyle = 'rgba(255,255,255,0.05)';
-  // label corners
-  bctx.font = '10px JetBrains Mono, monospace';
-  bctx.fillStyle = getThemeColor('--text2');
-  bctx.fillText('(0,0)', OFX+3, OFY-4);
-  bctx.fillText(`(${CW},${CH})`, OFX+CW-52, OFY+CH+12);
-  bctx.restore();
-}
-
-// ─── Default Prompt ───────────────────────────────────────────────────────
-function defaultPrompt() {
-  if (!state.scene) return '';
-  const objects = state.scene.objects.map(o => `  - id="${o.id}"，内容="${o.label}"`).join('\n');
-  return `你是一个专业的目标检测模型，任务是精确标定图像中各对象的边界框。
-
-画布尺寸: ${CW}×${CH} 像素（x 轴向右，y 轴向下，原点在左上角）
-
-图中包含以下对象:
-${objects}
-
-请为每个对象输出边界框坐标（整数像素值）：
-  x = 对象左边缘
-  y = 对象上边缘
-  w = 宽度
-  h = 高度
-
-边界框应尽量紧密包围对象的可见视觉区域。
-
-必须严格按以下 JSON 格式输出，不要包含任何代码块标记、注释或其他文字：
-{
-  "boxes": [
-    {"id": "对象id", "label": "该框标记的内容描述", "x": 数字, "y": 数字, "w": 数字, "h": 数字},
-    ...
-  ]
-}
-
-规则：
-- id 必须与给定列表完全一致
-- label 用简短中文描述该框标记的是什么内容
-- 所有数值为整数
-- 坐标基于 ${CW}×${CH} 画布，不要超出合理范围`;
-}
-
-function resetPrompt() {
-  document.getElementById('sysPrompt').value = defaultPrompt();
-}
-function copyPrompt() {
-  navigator.clipboard.writeText(document.getElementById('sysPrompt').value).then(() => {
-    const b = document.querySelector('.prompt-copy');
-    b.textContent = '已复制'; setTimeout(() => b.textContent = '复制', 1500);
+function renderModelsGrid(){
+  const grid=document.getElementById('modelsGrid');grid.innerHTML='';
+  if(!models.length){grid.innerHTML='<div class="empty-msg">暂无模型</div>';return;}
+  models.forEach(m=>{
+    const label=document.createElement('label');
+    label.className='model-item'+(selectedModels.has(m)?' selected':'');
+    const cb=document.createElement('input');cb.type='checkbox';cb.checked=selectedModels.has(m);
+    const span=document.createElement('span');span.className='model-name';span.textContent=m;span.title=m;
+    label.appendChild(cb);label.appendChild(span);
+    cb.onchange=()=>{
+      if(cb.checked)selectedModels.add(m);else selectedModels.delete(m);
+      label.className='model-item'+(selectedModels.has(m)?' selected':'');
+      document.getElementById('runBtn').disabled=selectedModels.size===0;
+    };
+    label.onclick=e=>{if(e.target!==cb){e.preventDefault();cb.checked=!cb.checked;cb.dispatchEvent(new Event('change'));}};
+    grid.appendChild(label);
   });
 }
 
-// ─── Scene Definitions ────────────────────────────────────────────────────
-const SCENES = {
-  letters: {
-    name: '字母 ABC', background: '#1a1d2e',
-    objects: [
-      { id: 'A', x: 80,  y: 100, w: 120, h: 140, color: '#ff6b9d', type: 'text',  label: '字母 A' },
-      { id: 'B', x: 250, y: 130, w: 110, h: 130, color: '#4fffb0', type: 'text',  label: '字母 B' },
-      { id: 'C', x: 420, y: 110, w: 125, h: 135, color: '#7c6aff', type: 'text',  label: '字母 C' },
-    ]
-  },
-  shapes: {
-    name: '几何图形', background: '#111420',
-    objects: [
-      { id: '红圆',   x: 60,  y: 80,  w: 130, h: 130, color: '#ff5e7a', type: 'circle',   label: '红色圆形' },
-      { id: '绿方',   x: 240, y: 160, w: 140, h: 140, color: '#4fffb0', type: 'rect',     label: '绿色正方形' },
-      { id: '蓝三角', x: 400, y: 80,  w: 160, h: 140, color: '#7c6aff', type: 'triangle', label: '蓝色三角形' },
-    ]
-  },
-  emoji: {
-    name: 'Emoji', background: '#14110f',
-    objects: [
-      { id: '星星', x: 70,  y: 90,  w: 120, h: 120, color: '#ffb347', type: 'emoji', label: '黄色星星', emoji: '⭐' },
-      { id: '心形', x: 250, y: 150, w: 110, h: 110, color: '#ff6b9d', type: 'emoji', label: '红色爱心', emoji: '❤️' },
-      { id: '火焰', x: 410, y: 100, w: 120, h: 130, color: '#ff8c42', type: 'emoji', label: '橙色火焰', emoji: '🔥' },
-    ]
-  },
-  mixed: {
-    name: '混合对象', background: '#0f1318',
-    objects: [
-      { id: 'X',  x: 60,  y: 90,  w: 110, h: 130, color: '#ff5e7a', type: 'text',   label: '字母 X' },
-      { id: '圆', x: 230, y: 120, w: 120, h: 120, color: '#4fffb0', type: 'circle', label: '绿色圆形' },
-      { id: '★', x: 390, y: 80,  w: 130, h: 130, color: '#ffb347', type: 'star',   label: '金色五角星' },
-    ]
-  },
-  random: { name: '随机场景', background: '#0d1117', objects: [] }
-};
+// ════════════════════════════════════════════════════════
+// Canvas Setup
+// ════════════════════════════════════════════════════════
+const mainCanvas=document.getElementById('mainCanvas');
+const overlayCanvas=document.getElementById('overlayCanvas');
+const boundaryCanvas=document.getElementById('boundaryCanvas');
+const ctx=mainCanvas.getContext('2d');
+const octx=overlayCanvas.getContext('2d');
+const bctx=boundaryCanvas.getContext('2d');
+const OW=CW+OFX*2, OH=CH+OFY*2;
+const outer=document.getElementById('canvasOuter');
+outer.style.width=OW+'px';outer.style.height=OH+'px';
+mainCanvas.style.left=OFX+'px';mainCanvas.style.top=OFY+'px';
+overlayCanvas.width=OW;overlayCanvas.height=OH;
+boundaryCanvas.width=OW;boundaryCanvas.height=OH;
+document.getElementById('canvasSizeLabel').textContent=`${CW}×${CH}`;
 
-function generateRandomObjects() {
-  const items = [
-    {id:'①',label:'标号①',type:'text'},{id:'②',label:'标号②',type:'circle'},
-    {id:'③',label:'标号③',type:'rect'},{id:'④',label:'标号④',type:'triangle'}
-  ];
-  const colors = ['#ff6b9d','#4fffb0','#7c6aff','#ffb347'];
-  const objs = [], used = [];
-  for (let i = 0; i < 3; i++) {
-    let tries=0, x, y, w=90+Math.random()*90, h=90+Math.random()*90;
-    do {
-      x = 40 + Math.random()*(CW-w-80);
-      y = 40 + Math.random()*(CH-h-80);
-      tries++;
-    } while (tries<80 && used.some(u=>rectsOverlap(x,y,w,h,u.x,u.y,u.w,u.h,24)));
+function drawBoundary(){
+  bctx.clearRect(0,0,OW,OH);
+  bctx.fillStyle='rgba(0,0,0,0.3)';
+  bctx.fillRect(0,0,OW,OFY);bctx.fillRect(0,OFY+CH,OW,OFY);
+  bctx.fillRect(0,OFY,OFX,CH);bctx.fillRect(OFX+CW,OFY,OFX,CH);
+  bctx.save();bctx.strokeStyle='rgba(255,255,255,0.18)';bctx.lineWidth=1;bctx.setLineDash([5,4]);
+  bctx.strokeRect(OFX+.5,OFY+.5,CW-1,CH-1);bctx.restore();
+  bctx.font='10px JetBrains Mono,monospace';bctx.fillStyle='rgba(255,255,255,0.22)';
+  bctx.fillText('(0,0)',OFX+4,OFY-5);bctx.fillText(`(${CW},${CH})`,OFX+CW-54,OFY+CH+14);
+}
+
+// ════════════════════════════════════════════════════════
+// Scenes
+// ════════════════════════════════════════════════════════
+const SCENES={
+  letters:{name:'字母 ABC',background:'#1a1d2e',objects:[
+    {id:'A',x:80,y:100,w:120,h:140,color:'#ff6b9d',type:'text',label:'字母 A'},
+    {id:'B',x:250,y:130,w:110,h:130,color:'#4fffb0',type:'text',label:'字母 B'},
+    {id:'C',x:420,y:110,w:125,h:135,color:'#7c6aff',type:'text',label:'字母 C'},
+  ]},
+  shapes:{name:'几何图形',background:'#111420',objects:[
+    {id:'红圆',x:60,y:80,w:130,h:130,color:'#ff5e7a',type:'circle',label:'红色圆形'},
+    {id:'绿方',x:240,y:160,w:140,h:140,color:'#4fffb0',type:'rect',label:'绿色正方形'},
+    {id:'蓝三角',x:400,y:80,w:160,h:140,color:'#7c6aff',type:'triangle',label:'蓝色三角形'},
+  ]},
+  emoji:{name:'Emoji',background:'#14110f',objects:[
+    {id:'星星',x:70,y:90,w:120,h:120,color:'#ffb347',type:'emoji',label:'黄色星星',emoji:'⭐'},
+    {id:'心形',x:250,y:150,w:110,h:110,color:'#ff6b9d',type:'emoji',label:'红色爱心',emoji:'❤️'},
+    {id:'火焰',x:410,y:100,w:120,h:130,color:'#ff8c42',type:'emoji',label:'橙色火焰',emoji:'🔥'},
+  ]},
+  mixed:{name:'混合对象',background:'#0f1318',objects:[
+    {id:'X',x:60,y:90,w:110,h:130,color:'#ff5e7a',type:'text',label:'字母 X'},
+    {id:'圆',x:230,y:120,w:120,h:120,color:'#4fffb0',type:'circle',label:'绿色圆形'},
+    {id:'★',x:390,y:80,w:130,h:130,color:'#ffb347',type:'star',label:'金色五角星'},
+  ]},
+  random:{name:'随机场景',background:'#0d1117',objects:[]}
+};
+function generateRandomObjects(){
+  const items=[{id:'①',label:'标号①',type:'text'},{id:'②',label:'标号②',type:'circle'},{id:'③',label:'标号③',type:'rect'},{id:'④',label:'标号④',type:'triangle'}];
+  const colors=['#ff6b9d','#4fffb0','#7c6aff','#ffb347'];
+  const objs=[],used=[];
+  for(let i=0;i<3;i++){
+    let tries=0,x,y,w=90+Math.random()*90,h=90+Math.random()*90;
+    do{x=40+Math.random()*(CW-w-80);y=40+Math.random()*(CH-h-80);tries++;}
+    while(tries<80&&used.some(u=>rectsOverlap(x,y,w,h,u.x,u.y,u.w,u.h,24)));
     used.push({x,y,w,h});
-    objs.push({...items[i], x:Math.round(x), y:Math.round(y), w:Math.round(w), h:Math.round(h), color:colors[i]});
+    objs.push({...items[i],x:Math.round(x),y:Math.round(y),w:Math.round(w),h:Math.round(h),color:colors[i]});
   }
   return objs;
 }
-function rectsOverlap(ax,ay,aw,ah,bx,by,bw,bh,pad=0) {
-  return !(ax+aw+pad<bx||bx+bw+pad<ax||ay+ah+pad<by||by+bh+pad<ay);
-}
+function rectsOverlap(ax,ay,aw,ah,bx,by,bw,bh,pad=0){return!(ax+aw+pad<bx||bx+bw+pad<ax||ay+ah+pad<by||by+bh+pad<ay);}
 
-// ─── Drawing ──────────────────────────────────────────────────────────────
-function drawScene(scene) {
-  ctx.fillStyle = scene.background;
-  ctx.fillRect(0,0,CW,CH);
-  ctx.strokeStyle='rgba(255,255,255,0.025)'; ctx.lineWidth=1;
+// ════════════════════════════════════════════════════════
+// Drawing
+// ════════════════════════════════════════════════════════
+function drawScene(scene){
+  ctx.clearRect(0,0,CW,CH);
+  if(state.bgImageObj){
+    ctx.fillStyle=scene.background;ctx.fillRect(0,0,CW,CH);
+    const op=parseFloat(document.getElementById('bgOpacity')?.value||1);
+    ctx.globalAlpha=op;ctx.drawImage(state.bgImageObj,0,0,CW,CH);ctx.globalAlpha=1;
+    const vg=ctx.createRadialGradient(CW/2,CH/2,CW*.3,CW/2,CH/2,CW*.8);
+    vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,0.35)');
+    ctx.fillStyle=vg;ctx.fillRect(0,0,CW,CH);
+  }else{ctx.fillStyle=scene.background;ctx.fillRect(0,0,CW,CH);}
+  ctx.strokeStyle=state.bgImageObj?'rgba(255,255,255,0.06)':'rgba(255,255,255,0.025)';ctx.lineWidth=1;
   for(let x=0;x<CW;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,CH);ctx.stroke();}
   for(let y=0;y<CH;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(CW,y);ctx.stroke();}
-  scene.objects.forEach(obj => drawObject(ctx, obj));
+  scene.objects.forEach(o=>drawObject(ctx,o));
 }
-
-function drawObject(c, obj) {
+function drawObject(c,obj){
   c.save();
-  if (obj.type==='text') {
-    const fs = Math.min(obj.w,obj.h)*0.82;
-    c.font = `900 ${fs}px Inter,sans-serif`;
-    c.fillStyle = obj.color; c.textAlign='center'; c.textBaseline='middle';
-    c.shadowColor=obj.color; c.shadowBlur=18;
-    c.fillText(obj.label.replace('字母 ',''), obj.x+obj.w/2, obj.y+obj.h/2);
-  } else if (obj.type==='circle') {
-    const cx=obj.x+obj.w/2, cy=obj.y+obj.h/2, r=Math.min(obj.w,obj.h)/2;
-    c.beginPath(); c.arc(cx,cy,r,0,Math.PI*2);
-    c.fillStyle=obj.color+'22'; c.fill();
-    c.strokeStyle=obj.color; c.lineWidth=3; c.shadowColor=obj.color; c.shadowBlur=12; c.stroke();
-    c.font=`600 13px Inter`; c.fillStyle=obj.color; c.textAlign='center'; c.textBaseline='middle'; c.shadowBlur=0;
-    c.fillText(obj.id, cx, cy);
-  } else if (obj.type==='rect') {
-    c.fillStyle=obj.color+'18'; c.fillRect(obj.x,obj.y,obj.w,obj.h);
-    c.strokeStyle=obj.color; c.lineWidth=3; c.shadowColor=obj.color; c.shadowBlur=12;
-    c.strokeRect(obj.x+1,obj.y+1,obj.w-2,obj.h-2);
-    c.font=`600 13px Inter`; c.fillStyle=obj.color; c.textAlign='center'; c.textBaseline='middle'; c.shadowBlur=0;
-    c.fillText(obj.id, obj.x+obj.w/2, obj.y+obj.h/2);
-  } else if (obj.type==='triangle') {
-    c.beginPath(); c.moveTo(obj.x+obj.w/2,obj.y); c.lineTo(obj.x+obj.w,obj.y+obj.h); c.lineTo(obj.x,obj.y+obj.h); c.closePath();
-    c.fillStyle=obj.color+'18'; c.fill();
-    c.strokeStyle=obj.color; c.lineWidth=3; c.shadowColor=obj.color; c.shadowBlur=12; c.stroke();
-    c.font=`600 13px Inter`; c.fillStyle=obj.color; c.textAlign='center'; c.textBaseline='middle'; c.shadowBlur=0;
-    c.fillText(obj.id, obj.x+obj.w/2, obj.y+obj.h*0.65);
-  } else if (obj.type==='star') {
-    drawStar(c, obj.x+obj.w/2, obj.y+obj.h/2, Math.min(obj.w,obj.h)/2, obj.color);
-    c.font=`600 12px Inter`; c.fillStyle=obj.color; c.textAlign='center'; c.textBaseline='middle';
-    c.fillText(obj.id, obj.x+obj.w/2, obj.y+obj.h/2);
-  } else if (obj.type==='emoji') {
-    const fs=Math.min(obj.w,obj.h)*0.72;
-    c.font=`${fs}px serif`; c.textAlign='center'; c.textBaseline='middle';
-    c.fillText(obj.emoji||obj.label, obj.x+obj.w/2, obj.y+obj.h/2);
-  }
+  const lbl=obj.label.replace(/字母\s*/,'');
+  if(obj.type==='text'){const fs=Math.min(obj.w,obj.h)*.82;c.font=`900 ${fs}px Inter,sans-serif`;c.fillStyle=obj.color;c.textAlign='center';c.textBaseline='middle';c.shadowColor=obj.color;c.shadowBlur=18;c.fillText(lbl.length<=2?lbl:obj.id,obj.x+obj.w/2,obj.y+obj.h/2);}
+  else if(obj.type==='circle'){const cx=obj.x+obj.w/2,cy=obj.y+obj.h/2,r=Math.min(obj.w,obj.h)/2;c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.fillStyle=obj.color+'22';c.fill();c.strokeStyle=obj.color;c.lineWidth=3;c.shadowColor=obj.color;c.shadowBlur=12;c.stroke();c.font='600 13px Inter';c.fillStyle=obj.color;c.textAlign='center';c.textBaseline='middle';c.shadowBlur=0;c.fillText(obj.id,cx,cy);}
+  else if(obj.type==='rect'){c.fillStyle=obj.color+'18';c.fillRect(obj.x,obj.y,obj.w,obj.h);c.strokeStyle=obj.color;c.lineWidth=3;c.shadowColor=obj.color;c.shadowBlur=12;c.strokeRect(obj.x+1,obj.y+1,obj.w-2,obj.h-2);c.font='600 13px Inter';c.fillStyle=obj.color;c.textAlign='center';c.textBaseline='middle';c.shadowBlur=0;c.fillText(obj.id,obj.x+obj.w/2,obj.y+obj.h/2);}
+  else if(obj.type==='triangle'){c.beginPath();c.moveTo(obj.x+obj.w/2,obj.y);c.lineTo(obj.x+obj.w,obj.y+obj.h);c.lineTo(obj.x,obj.y+obj.h);c.closePath();c.fillStyle=obj.color+'18';c.fill();c.strokeStyle=obj.color;c.lineWidth=3;c.shadowColor=obj.color;c.shadowBlur=12;c.stroke();c.font='600 13px Inter';c.fillStyle=obj.color;c.textAlign='center';c.textBaseline='middle';c.shadowBlur=0;c.fillText(obj.id,obj.x+obj.w/2,obj.y+obj.h*.65);}
+  else if(obj.type==='star'){drawStar(c,obj.x+obj.w/2,obj.y+obj.h/2,Math.min(obj.w,obj.h)/2,obj.color);c.font='600 12px Inter';c.fillStyle=obj.color;c.textAlign='center';c.textBaseline='middle';c.fillText(obj.id,obj.x+obj.w/2,obj.y+obj.h/2);}
+  else if(obj.type==='emoji'){const fs=Math.min(obj.w,obj.h)*.72;c.font=`${fs}px serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(obj.emoji||obj.id,obj.x+obj.w/2,obj.y+obj.h/2);}
   c.restore();
 }
+function drawStar(c,cx,cy,r,color){c.save();c.beginPath();for(let i=0;i<5;i++){const a=Math.PI/180*(72*i-90),ia=Math.PI/180*(72*i-54);i===0?c.moveTo(cx+r*Math.cos(a),cy+r*Math.sin(a)):c.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));c.lineTo(cx+r*.4*Math.cos(ia),cy+r*.4*Math.sin(ia));}c.closePath();c.fillStyle=color+'33';c.fill();c.strokeStyle=color;c.lineWidth=2.5;c.shadowColor=color;c.shadowBlur=10;c.stroke();c.restore();}
+function isOOB(b){return b.x<0||b.y<0||b.x+b.w>CW||b.y+b.h>CH;}
 
-function drawStar(c,cx,cy,r,color) {
-  c.save(); c.beginPath();
-  for(let i=0;i<5;i++){
-    const a=Math.PI/180*(72*i-90), ia=Math.PI/180*(72*i-54);
-    if(i===0) c.moveTo(cx+r*Math.cos(a),cy+r*Math.sin(a));
-    else c.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));
-    c.lineTo(cx+r*0.4*Math.cos(ia),cy+r*0.4*Math.sin(ia));
-  }
-  c.closePath();
-  c.fillStyle=color+'33'; c.fill();
-  c.strokeStyle=color; c.lineWidth=2.5; c.shadowColor=color; c.shadowBlur=10; c.stroke();
-  c.restore();
-}
-
-function isOOB(box) {
-  return box.x < 0 || box.y < 0 || box.x+box.w > CW || box.y+box.h > CH;
-}
-
-function drawOverlay() {
-  octx.clearRect(0,0,overlayCanvas.width,overlayCanvas.height);
-  const ox=OFX, oy=OFY; // translate into the padded outer space
-
-  if (state.showGT && state.groundTruth.length) {
-    state.groundTruth.forEach(obj => {
-      octx.save();
-      octx.strokeStyle=COLORS.gt; octx.lineWidth=2; octx.setLineDash([6,3]);
-      octx.shadowColor=COLORS.gt; octx.shadowBlur=6;
-      octx.strokeRect(ox+obj.x+0.5, oy+obj.y+0.5, obj.w, obj.h);
-      if (state.showLabels) {
-        octx.shadowBlur = 0; // Disable shadow for labels
-        octx.setLineDash([]);
-        octx.fillStyle=COLORS.gt;
-        octx.font='11px JetBrains Mono,monospace';
-        const lbl='GT:'+obj.id;
-        const lw=octx.measureText(lbl).width+8;
-        octx.fillRect(ox+obj.x, oy+obj.y-18, lw, 16);
-        octx.fillStyle=getThemeColor('--bg');
-        octx.fillText(lbl, ox+obj.x+4, oy+obj.y-6);
-      }
+function drawOverlay(){
+  octx.clearRect(0,0,OW,OH);
+  if(state.showGT&&state.groundTruth.length){
+    state.groundTruth.forEach(obj=>{
+      octx.save();octx.strokeStyle=COLORS.gt;octx.lineWidth=2;octx.setLineDash([6,3]);octx.shadowColor=COLORS.gt;octx.shadowBlur=6;
+      octx.strokeRect(OFX+obj.x+.5,OFY+obj.y+.5,obj.w,obj.h);
+      if(state.showLabels){octx.setLineDash([]);octx.shadowBlur=0;octx.fillStyle=COLORS.gt;octx.font='11px JetBrains Mono,monospace';const lbl='GT:'+obj.id;const lw=octx.measureText(lbl).width+8;octx.fillRect(OFX+obj.x,OFY+obj.y-18,lw,16);octx.fillStyle=gc('--bg');octx.fillText(lbl,OFX+obj.x+4,OFY+obj.y-6);}
       octx.restore();
     });
   }
-
-  if (state.visibleModels.size > 0 && state.allResults) {
-    const thresh = parseFloat(document.getElementById('iouThreshold').value);
-
-    state.visibleModels.forEach(model => {
-      const data = state.allResults[model];
-      if (!data) return;
-
-      data.results.forEach(res => {
-        if (!res.pred) return;
-        const pred = res.pred;
-        const matched = res.matched;
-        const col = matched ? COLORS.pred : COLORS.miss;
-        const oob = pred.oob;
-
-        octx.save();
-        octx.strokeStyle = col; octx.lineWidth = oob ? 2 : 2.5;
-        octx.setLineDash(oob ? [3, 3] : []);
-        octx.shadowColor = col; octx.shadowBlur = 10;
-        octx.strokeRect(ox + pred.x + 0.5, oy + pred.y + 0.5, pred.w, pred.h);
-
-        if (state.showLabels) {
-          octx.shadowBlur = 0; // Disable shadow for labels
-          octx.setLineDash([]);
-          octx.fillStyle = col;
-          octx.font = '11px JetBrains Mono,monospace';
-          const iouStr = ` IoU:${pred.iou.toFixed(2)}`;
-          // If multiple models are visible, prefix label with model name
-          const modelPrefix = state.visibleModels.size > 1 ? `${model.slice(0,8)}: ` : '';
-          const lbl = `${modelPrefix}${res.gt.id}${iouStr}`;
-
-          const lw = octx.measureText(lbl).width + 8;
-          const ly = oy + pred.y + pred.h + 2;
-          octx.fillRect(ox + pred.x, ly, lw, 16);
-          octx.fillStyle = getThemeColor('--bg');
-          octx.fillText(lbl, ox + pred.x + 4, ly + 12);
-
-          if (pred.label) {
-            octx.font = '10px Inter,sans-serif';
-            octx.fillStyle = col + 'cc';
-            octx.fillText('▸ ' + pred.label, ox + pred.x + 4, oy + pred.y + 14);
-          }
-
-          if (oob) {
-            octx.font = 'bold 10px Inter,sans-serif';
-            octx.fillStyle = COLORS.warn;
-            octx.fillText('⚠ OOB', ox + pred.x + pred.w - 44, oy + pred.y + 14);
-          }
+  if(state.visibleModels.size>0&&state.allResults){
+    const thresh=parseFloat(document.getElementById('iouThreshold').value);
+    state.visibleModels.forEach(model=>{
+      const data=state.allResults[model];if(!data)return;
+      data.results.forEach(res=>{
+        if(!res.pred)return;
+        const pred=res.pred,col=res.matched?COLORS.pred:COLORS.miss,oob=pred.oob;
+        octx.save();octx.strokeStyle=col;octx.lineWidth=oob?1.5:2.5;octx.setLineDash(oob?[3,3]:[]);octx.shadowColor=col;octx.shadowBlur=10;
+        octx.strokeRect(OFX+pred.x+.5,OFY+pred.y+.5,pred.w,pred.h);
+        if(state.showLabels){
+          octx.setLineDash([]);octx.shadowBlur=0;octx.fillStyle=col;octx.font='11px JetBrains Mono,monospace';
+          const mp=state.visibleModels.size>1?`${model.slice(0,8)}: `:'';
+          const lbl=`${mp}${res.gt.id} IoU:${pred.iou.toFixed(2)}`;
+          const lw=octx.measureText(lbl).width+8,ly=OFY+pred.y+pred.h+2;
+          octx.fillRect(OFX+pred.x,ly,lw,16);octx.fillStyle=gc('--bg');octx.fillText(lbl,OFX+pred.x+4,ly+12);
+          if(pred.label){octx.font='10px Inter,sans-serif';octx.fillStyle=col+'cc';octx.fillText('▸ '+pred.label,OFX+pred.x+4,OFY+pred.y+14);}
+          if(oob){octx.font='bold 10px Inter,sans-serif';octx.fillStyle=COLORS.warn;octx.fillText('⚠OOB',OFX+pred.x+pred.w-38,OFY+pred.y+14);}
         }
         octx.restore();
       });
@@ -851,470 +638,405 @@ function drawOverlay() {
   }
 }
 
-// ─── Scene Loading ────────────────────────────────────────────────────────
-function loadScene(name) {
-  if (name==='random') SCENES.random.objects=generateRandomObjects();
-  state.scene=SCENES[name];
+// ════════════════════════════════════════════════════════
+// Scene Loading
+// ════════════════════════════════════════════════════════
+function loadScene(name){
+  if(name==='random')SCENES.random.objects=generateRandomObjects();
+  state.scene=SCENES[name];state.currentSceneName=name;
   state.groundTruth=state.scene.objects.map(o=>({...o}));
-  state.allResults=null;
+  state.allResults=null;state.visibleModels.clear();
   document.querySelectorAll('.scene-btn').forEach(b=>b.classList.toggle('active',b.dataset.scene===name));
-  drawScene(state.scene);
-  drawBoundary();
-  drawOverlay();
-  clearResults();
-  resetPrompt();
+  drawScene(state.scene);drawBoundary();drawOverlay();
+  updatePredButtons();resetPrompt();
   setStatus('ready',`场景: ${state.scene.name}，${state.groundTruth.length} 个对象`);
 }
+function redrawScene(){if(!state.scene)return;drawScene(state.scene);drawBoundary();drawOverlay();}
+function toggleGroundTruth(){state.showGT=!state.showGT;document.getElementById('gtBtn').classList.toggle('active',state.showGT);drawOverlay();}
+function togglePrediction(model){state.visibleModels.has(model)?state.visibleModels.delete(model):state.visibleModels.add(model);updatePredButtons();drawOverlay();}
+function updatePredButtons(){const c=document.getElementById('predBtnsContainer');c.innerHTML='';if(!state.allResults)return;Object.keys(state.allResults).forEach(m=>{const b=document.createElement('button');b.className='btn-sm'+(state.visibleModels.has(m)?' active':'');b.textContent='预测: '+m.split('/').pop().slice(0,14);b.onclick=()=>togglePrediction(m);c.appendChild(b);});}
+function toggleLabels(){state.showLabels=!state.showLabels;document.getElementById('labelBtn').classList.toggle('active',state.showLabels);drawOverlay();}
+function toggleVision(){state.visionEnabled=!state.visionEnabled;document.getElementById('visionToggle').classList.toggle('on',state.visionEnabled);}
+function resetAll(){state.allResults=null;state.visibleModels.clear();updatePredButtons();drawOverlay();document.getElementById('currentResults').innerHTML='';document.getElementById('currentEmpty').style.display='';setStatus('ready','已重置');}
 
-function clearResults() {
-  document.getElementById('resultsBody').innerHTML = '';
+// ════════════════════════════════════════════════════════
+// Prompt
+// ════════════════════════════════════════════════════════
+function defaultPrompt(){
+  if(!state.scene)return'';
+  const objects=state.scene.objects.map(o=>`  - id="${o.id}"，内容="${o.label}"`).join('\n');
+  return `你是一个专业的目标检测模型，任务是精确标定图像中各对象的边界框。\n\n画布尺寸: ${CW}×${CH} 像素（x 轴向右，y 轴向下，原点在左上角）\n\n图中包含以下对象:\n${objects}\n\n请为每个对象输出边界框坐标（整数像素值）：\n  x = 对象左边缘\n  y = 对象上边缘\n  w = 宽度\n  h = 高度\n\n边界框应尽量紧密包围对象的可见视觉区域。\n\n必须严格按以下 JSON 格式输出，不要包含任何代码块标记、注释或其他文字：\n{\n  "boxes": [\n    {"id": "对象id", "label": "该框标记的内容描述", "x": 数字, "y": 数字, "w": 数字, "h": 数字},\n    ...\n  ]\n}\n\n规则：\n- id 必须与给定列表完全一致\n- label 用简短中文描述该框标记的是什么内容\n- 所有数值为整数\n- 坐标基于 ${CW}×${CH} 画布`;
 }
+function resetPrompt(){document.getElementById('sysPrompt').value=defaultPrompt();}
+function copyPrompt(){navigator.clipboard.writeText(document.getElementById('sysPrompt').value).then(()=>{const b=document.querySelector('.prompt-copy');b.textContent='已复制';setTimeout(()=>b.textContent='复制',1500);});}
 
-function redrawScene() { if(!state.scene)return; drawScene(state.scene); drawBoundary(); drawOverlay(); }
+// ════════════════════════════════════════════════════════
+// API
+// ════════════════════════════════════════════════════════
+function buildImagePayload(){return new Promise(resolve=>{mainCanvas.toBlob(blob=>{const r=new FileReader();r.onload=e=>resolve(e.target.result.split(',')[1]);r.readAsDataURL(blob);},'image/png');});}
 
-function toggleGroundTruth() {
-  state.showGT=!state.showGT;
-  document.getElementById('gtBtn').classList.toggle('active',state.showGT);
-  drawOverlay();
-}
-function togglePrediction(model) {
-  if (state.visibleModels.has(model)) {
-    state.visibleModels.delete(model);
-  } else {
-    state.visibleModels.add(model);
-  }
-  updatePredButtons();
-  drawOverlay();
-}
-
-function updatePredButtons() {
-  const container = document.getElementById('predBtnsContainer');
-  container.innerHTML = '';
-  if (!state.allResults) return;
-
-  Object.keys(state.allResults).forEach(model => {
-    const btn = document.createElement('button');
-    btn.className = 'btn-sm' + (state.visibleModels.has(model) ? ' active' : '');
-    btn.textContent = `预测: ${model}`;
-    btn.onclick = () => togglePrediction(model);
-    container.appendChild(btn);
-  });
-}
-function toggleLabels() {
-  state.showLabels=!state.showLabels;
-  document.getElementById('labelBtn').classList.toggle('active',state.showLabels);
-  drawOverlay();
-}
-function toggleVision() {
-  state.visionEnabled=!state.visionEnabled;
-  document.getElementById('visionToggle').classList.toggle('on',state.visionEnabled);
-}
-
-// ─── Reset ────────────────────────────────────────────────────────────────
-function resetAll() {
-  state.visibleModels.clear();
-  state.allResults = null;
-  updatePredButtons();
-  drawOverlay();
-  clearResults();
-  setStatus('ready','已重置');
-}
-
-// ─── Prompt Building ──────────────────────────────────────────────────────
-function getPrompt() {
-  return document.getElementById('sysPrompt').value.trim() || defaultPrompt();
-}
-
-function buildImagePayload() {
-  return new Promise(resolve => {
-    mainCanvas.toBlob(blob => {
-      const r=new FileReader();
-      r.onload=e=>resolve(e.target.result.split(',')[1]);
-      r.readAsDataURL(blob);
-    },'image/png');
-  });
-}
-
-// ─── API Call (deprecated local, now using callModel below) ───────────────
-
-// ─── Parsing ──────────────────────────────────────────────────────────────
-function cleanJson(text) {
-  let s=text.replace(/```(?:json)?\s*/gi,'').replace(/```/g,'');
-  s=s.replace(/\/\/[^\n]*/g,'');
-  s=s.replace(/\/\*[\s\S]*?\*\//g,'');
-  s=s.replace(/,\s*([}\]])/g,'$1');
-  s=s.replace(/'([^'\\]*(\\.[^'\\]*)*)'/g,(_,inner)=>`"${inner.replace(/"/g,'\\"')}"`);
-  return s.trim();
-}
-
-function parseBoxes(rawText) {
-  const attempts=[];
-  const fence=rawText.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if(fence) attempts.push(fence[1].trim());
-  const block=rawText.match(/\{[\s\S]*?"boxes"[\s\S]*?\}/);
-  if(block) attempts.push(block[0]);
-  attempts.push(rawText);
-
-  let lastErr=null;
-  for(let raw of attempts){
-    for(const candidate of [raw,cleanJson(raw)]){
-      try{
-        const m=candidate.match(/\{[\s\S]*\}/);
-        if(!m) continue;
-        const parsed=JSON.parse(m[0]);
-        if(Array.isArray(parsed.boxes)&&parsed.boxes.length>0){
-          return parsed.boxes.map(b=>({
-            id:   String(b.id??b.label??b.name??'?'),
-            label:String(b.label??b.description??b.content??b.id??''),
-            x:    Math.round(Number(b.x??b.left??0)),
-            y:    Math.round(Number(b.y??b.top??0)),
-            w:    Math.round(Number(b.w??b.width??0)),
-            h:    Math.round(Number(b.h??b.height??0))
-          }));
-        }
-      }catch(e){lastErr=e;}
-    }
-  }
-  // fallback regex
-  const boxPat=/\{[^{}]*?"id"\s*:\s*"([^"]+)"[^{}]*?"x"\s*:\s*(-?\d+)[^{}]*?"y"\s*:\s*(-?\d+)[^{}]*?"w"\s*:\s*(\d+)[^{}]*?"h"\s*:\s*(\d+)[^{}]*?\}/g;
-  const boxes=[];
-  let m;
-  while((m=boxPat.exec(rawText))!==null)
-    boxes.push({id:m[1],label:m[1],x:+m[2],y:+m[3],w:+m[4],h:+m[5]});
-  if(boxes.length>0) return boxes;
-  throw new Error(`无法解析响应中的 JSON\n原始: ${rawText.slice(0,300)}\n错误: ${lastErr?.message}`);
-}
-
-// ─── IoU ──────────────────────────────────────────────────────────────────
-function computeIoU(a,b) {
-  const ix1=Math.max(a.x,b.x), iy1=Math.max(a.y,b.y);
-  const ix2=Math.min(a.x+a.w,b.x+b.w), iy2=Math.min(a.y+a.h,b.y+b.h);
-  const inter=Math.max(0,ix2-ix1)*Math.max(0,iy2-iy1);
-  if(!inter) return 0;
-  return inter/(a.w*a.h+b.w*b.h-inter);
-}
-function computeMetrics(gt,pred){
-  const cd=Math.sqrt(Math.pow((gt.x+gt.w/2)-(pred.x+pred.w/2),2)+Math.pow((gt.y+gt.h/2)-(pred.y+pred.h/2),2));
-  return {centerDist:Math.round(cd), sizeErr:Math.round(Math.abs(gt.w*gt.h-pred.w*pred.h)/(gt.w*gt.h)*100)};
-}
-
-// ─── Benchmark ────────────────────────────────────────────────────────────
-
-async function callModel(model, serverType, serverUrl, apiKey, scene) {
-  const profile = SERVERS[serverType];
-  const base = serverUrl.trim().replace(/\/$/, '');
-  const temperature = parseFloat(document.getElementById('temperature').value);
-  const maxTokens = parseInt(document.getElementById('maxTokens').value);
-  const userPromptText = getPrompt();
-
+async function callModel(model){
+  const type=document.getElementById('serverType').value;
+  const base=document.getElementById('serverUrl').value.trim().replace(/\/$/,'');
+  const key=document.getElementById('apiKey').value.trim();
+  const temperature=parseFloat(document.getElementById('temperature').value);
+  const maxTokens=parseInt(document.getElementById('maxTokens').value);
+  const promptText=document.getElementById('sysPrompt').value.trim()||defaultPrompt();
+  const p=SERVERS[type];
   let messages;
-  if (state.visionEnabled) {
-    const imgBase64 = await buildImagePayload();
-    messages = [
-      { role: 'user', content: [
-        { type: 'image_url', image_url: { url: `data:image/png;base64,${imgBase64}` } },
-        { type: 'text', text: userPromptText }
-      ]}
-    ];
-  } else {
-    messages = [{ role: 'user', content: userPromptText }];
-  }
-
-  const body = profile.buildBody(model, messages, false);
-  if (body.temperature !== undefined) body.temperature = temperature;
-  if (body.max_tokens !== undefined) body.max_tokens = maxTokens;
-
-  const resp = await fetch(`${base}${profile.completionPath}`, {
-    method: 'POST',
-    headers: getHeaders(serverType, apiKey),
-    body: JSON.stringify(body)
-  });
-
-  if (!resp.ok) {
-    const e = await resp.text();
-    throw new Error(`API ${resp.status}: ${e}`);
-  }
-
-  const data = await resp.json();
-  let text = '';
-  if (serverType === 'anthropic') {
-    text = data.content?.[0]?.text || '';
-  } else {
-    text = data.choices?.[0]?.message?.content || data.content?.[0]?.text || '';
-  }
-  return { raw: JSON.stringify(data, null, 2), text };
+  if(state.visionEnabled){
+    const img=await buildImagePayload();
+    messages=[{role:'user',content:[{type:'image_url',image_url:{url:`data:image/png;base64,${img}`}},{type:'text',text:promptText}]}];
+  }else{messages=[{role:'user',content:promptText}];}
+  const body=p.buildBody(model,messages,false);
+  if(body.temperature!==undefined)body.temperature=temperature;
+  if(body.max_tokens!==undefined)body.max_tokens=maxTokens;
+  const resp=await fetch(`${base}${p.completionPath}`,{method:'POST',headers:getHeaders(type,key),body:JSON.stringify(body)});
+  if(!resp.ok){const e=await resp.text();throw new Error(`API ${resp.status}: ${e}`);}
+  const data=await resp.json();
+  let text='';
+  if(type==='anthropic')text=data.content?.[0]?.text||'';
+  else text=data.choices?.[0]?.message?.content||data.content?.[0]?.text||'';
+  return{raw:JSON.stringify(data,null,2),text};
 }
 
-async function runBenchmark() {
-  if(state.running) return;
+// ════════════════════════════════════════════════════════
+// Parse
+// ════════════════════════════════════════════════════════
+function cleanJson(t){let s=t.replace(/```(?:json)?\s*/gi,'').replace(/```/g,'');s=s.replace(/\/\/[^\n]*/g,'').replace(/\/\*[\s\S]*?\*\//g,'');s=s.replace(/,\s*([}\]])/g,'$1');s=s.replace(/'([^'\\]*(\\.[^'\\]*)*)'/g,(_,i)=>`"${i.replace(/"/g,'\\"')}"` );return s.trim();}
+function parseBoxes(rawText){
+  const attempts=[];
+  const fence=rawText.match(/```(?:json)?\s*([\s\S]*?)```/i);if(fence)attempts.push(fence[1].trim());
+  const block=rawText.match(/\{[\s\S]*?"boxes"[\s\S]*?\}/);if(block)attempts.push(block[0]);
+  attempts.push(rawText);
+  let lastErr=null;
+  for(const raw of attempts){for(const cand of[raw,cleanJson(raw)]){try{const m=cand.match(/\{[\s\S]*\}/);if(!m)continue;const p=JSON.parse(m[0]);if(Array.isArray(p.boxes)&&p.boxes.length>0)return p.boxes.map(b=>({id:String(b.id??b.name??'?'),label:String(b.label??b.description??b.content??b.id??''),x:Math.round(Number(b.x??b.left??0)),y:Math.round(Number(b.y??b.top??0)),w:Math.round(Number(b.w??b.width??0)),h:Math.round(Number(b.h??b.height??0))}));}catch(e){lastErr=e;}}}
+  const re=/\{[^{}]*?"id"\s*:\s*"([^"]+)"[^{}]*?"x"\s*:\s*(-?\d+)[^{}]*?"y"\s*:\s*(-?\d+)[^{}]*?"w"\s*:\s*(\d+)[^{}]*?"h"\s*:\s*(\d+)[^{}]*?\}/g;
+  const boxes=[];let m;while((m=re.exec(rawText))!==null)boxes.push({id:m[1],label:m[1],x:+m[2],y:+m[3],w:+m[4],h:+m[5]});
+  if(boxes.length)return boxes;
+  throw new Error(`无法解析响应 JSON\n${rawText.slice(0,300)}\n${lastErr?.message}`);
+}
+
+// ════════════════════════════════════════════════════════
+// IoU / Metrics
+// ════════════════════════════════════════════════════════
+function computeIoU(a,b){const ix1=Math.max(a.x,b.x),iy1=Math.max(a.y,b.y),ix2=Math.min(a.x+a.w,b.x+b.w),iy2=Math.min(a.y+a.h,b.y+b.h);const inter=Math.max(0,ix2-ix1)*Math.max(0,iy2-iy1);if(!inter)return 0;return inter/(a.w*a.h+b.w*b.h-inter);}
+function computeMetrics(gt,pred){const cd=Math.sqrt((gt.x+gt.w/2-pred.x-pred.w/2)**2+(gt.y+gt.h/2-pred.y-pred.h/2)**2);return{centerDist:Math.round(cd),sizeErr:Math.round(Math.abs(gt.w*gt.h-pred.w*pred.h)/(gt.w*gt.h)*100)};}
+
+// ════════════════════════════════════════════════════════
+// Run Benchmark
+// ════════════════════════════════════════════════════════
+async function runBenchmark(){
+  if(state.running)return;
   if(!state.scene){alert('请先选择一个测试场景');return;}
-  if(selectedModels.size === 0){alert('请先选择至少一个模型');return;}
-
-  state.running=true;
-  state.allResults = {};
+  if(selectedModels.size===0){alert('请先获取并勾选至少一个模型');return;}
+  state.running=true;state.allResults={};state.visibleModels.clear();
+  updatePredButtons();
   document.getElementById('runBtn').disabled=true;
-  document.getElementById('resultsBody').innerHTML = '';
-
-  const serverType = serverTypeEl.value;
-  const serverUrl = serverUrlEl.value;
-  const apiKey = document.getElementById('apiKey').value.trim();
-
-  try {
-    for (const model of selectedModels) {
-      setStatus('busy', `正在调用模型: ${model}...`);
-      const t0 = Date.now();
-      try {
-        const { raw, text } = await callModel(model, serverType, serverUrl, apiKey, state.scene);
-        const elapsed = Date.now() - t0;
-        const boxes = parseBoxes(text);
-        const results = processModelResults(model, boxes, elapsed, text);
-        state.allResults[model] = { results, elapsed, rawText: text };
-        renderModelResultCard(model, results, elapsed, text);
-      } catch (err) {
-        renderModelError(model, err.message);
-      }
+  document.getElementById('currentEmpty').style.display='none';
+  document.getElementById('currentResults').innerHTML='';
+  const thresh=parseFloat(document.getElementById('iouThreshold').value);
+  try{
+    for(const model of selectedModels){
+      setStatus('busy',`正在调用: ${model}...`);
+      const t0=Date.now();
+      try{
+        const{raw,text}=await callModel(model);
+        const elapsed=Date.now()-t0;
+        const boxes=parseBoxes(text);
+        const results=processModelResults(model,boxes);
+        state.allResults[model]={results,elapsed,rawText:text};
+        renderModelCard(model,results,elapsed,text);
+        // auto-show first model's predictions
+        if(Object.keys(state.allResults).length===1){state.visibleModels.add(model);updatePredButtons();drawOverlay();}
+      }catch(err){renderModelError(model,err.message);}
     }
-    setStatus('ok', '所有模型测试完成');
-  } catch (err) {
-    setStatus('err', '发生意外错误: ' + err.message);
-  } finally {
-    state.running = false;
-    document.getElementById('runBtn').disabled = false;
-    const firstModel = Array.from(selectedModels)[0];
-    if (state.allResults[firstModel]) {
-      state.visibleModels.add(firstModel);
-      updatePredButtons();
-      drawOverlay();
-    }
-  }
+    // Save session
+    saveSession(thresh);
+    const total=Object.values(state.allResults).reduce((s,d)=>s+d.results.filter(r=>r.matched).length,0);
+    const maxPossible=Object.values(state.allResults).reduce((s,d)=>s+d.results.length,0);
+    setStatus('ok',`全部完成 · ${total}/${maxPossible} 通过 · ${selectedModels.size} 个模型`);
+    switchTab('current');
+  }catch(err){setStatus('err','意外错误: '+err.message);}
+  finally{state.running=false;document.getElementById('runBtn').disabled=selectedModels.size===0;}
 }
 
-function processModelResults(model, boxes, elapsed, rawText) {
-  const thresh = parseFloat(document.getElementById('iouThreshold').value);
-  return state.groundTruth.map(gt => {
-    const pred = boxes.find(b => b.id === gt.id) || boxes[state.groundTruth.indexOf(gt)];
-    if (!pred) return { gt, pred: null, iou: 0, matched: false, metrics: null };
-    const iou = computeIoU(gt, pred);
-    const metrics = computeMetrics(gt, pred);
-    const oob = isOOB(pred);
-    return { gt, pred: { ...pred, iou, oob }, iou, matched: iou >= thresh, metrics };
+function processModelResults(model,boxes){
+  const thresh=parseFloat(document.getElementById('iouThreshold').value);
+  return state.groundTruth.map(gt=>{
+    const pred=boxes.find(b=>b.id===gt.id)||boxes[state.groundTruth.indexOf(gt)];
+    if(!pred)return{gt,pred:null,iou:0,matched:false,metrics:null};
+    const iou=computeIoU(gt,pred);
+    return{gt,pred:{...pred,iou,oob:isOOB(pred)},iou,matched:iou>=thresh,metrics:computeMetrics(gt,pred)};
   });
 }
 
-
-function recomputeIfDone() {
-  if(!state.allResults) return;
-  const thresh = parseFloat(document.getElementById('iouThreshold').value);
-  document.getElementById('resultsBody').innerHTML = '';
-  for (const [model, data] of Object.entries(state.allResults)) {
-    const updated = data.results.map(r => r.pred ? { ...r, iou: computeIoU(r.gt, r.pred), matched: computeIoU(r.gt, r.pred) >= thresh } : r);
-    state.allResults[model].results = updated;
-    renderModelResultCard(model, updated, data.elapsed, data.rawText);
+function recomputeIfDone(){
+  if(!state.allResults)return;
+  const thresh=parseFloat(document.getElementById('iouThreshold').value);
+  document.getElementById('currentResults').innerHTML='';
+  for(const[m,data]of Object.entries(state.allResults)){
+    const updated=data.results.map(r=>r.pred?{...r,iou:computeIoU(r.gt,r.pred),matched:computeIoU(r.gt,r.pred)>=thresh}:r);
+    state.allResults[m].results=updated;
+    renderModelCard(m,updated,data.elapsed,data.rawText);
   }
   drawOverlay();
 }
 
-// ─── Manual edit of prediction boxes ─────────────────────────────────────
-
-function renderModelResultCard(model, results, elapsed, rawText) {
-  const thresh = parseFloat(document.getElementById('iouThreshold').value);
-  const passed = results.filter(r => r.matched).length;
-  const avgIoU = results.length ? (results.reduce((s, r) => s + r.iou, 0) / results.length).toFixed(3) : '0';
-  const oobCount = results.filter(r => r.pred && isOOB(r.pred)).length;
-
-  const modelSafeId = btoa(encodeURIComponent(model)).replace(/[^a-zA-Z0-9]/g, '');
-
-  let html = `<div class="model-card" id="card-${modelSafeId}">
+// ════════════════════════════════════════════════════════
+// Render
+// ════════════════════════════════════════════════════════
+function renderModelCard(model,results,elapsed,rawText){
+  const thresh=parseFloat(document.getElementById('iouThreshold').value);
+  const passed=results.filter(r=>r.matched).length;
+  const avgIoU=results.length?(results.reduce((s,r)=>s+r.iou,0)/results.length).toFixed(3):'0';
+  const oobN=results.filter(r=>r.pred&&isOOB(r.pred)).length;
+  const msid=btoa(encodeURIComponent(model)).replace(/[^a-zA-Z0-9]/g,'');
+  let html=`<div class="model-card" id="card-${msid}">
     <div class="model-card-header">
-      <div class="model-card-name">${escapeHtml(model)}</div>
-      <button class="btn-sm" onclick="showOnCanvas('${escJs(model)}')">在画布查看</button>
+      <div class="model-card-name" title="${esc(model)}">${esc(model.split('/').pop())}</div>
+      <button class="btn-sm" onclick="showOnCanvas('${escJs(model)}')">画布聚焦</button>
     </div>
-    <div style="padding: 10px;">
+    <div style="padding:10px">
       <div class="summary-strip">
-        <div class="seg ${passed === results.length ? 'green' : passed > 0 ? 'yellow' : 'red'}">
-          <div class="sv">${passed}/${results.length}</div><div class="sk">通过</div>
-        </div>
-        <div class="seg">
-          <div class="sv" style="color:var(--accent2)">${avgIoU}</div><div class="sk">平均IoU</div>
-        </div>
-        <div class="seg">
-          <div class="sv" style="color:${oobCount ? 'var(--accent3)' : 'var(--text3)'}">${oobCount}</div><div class="sk">越界框</div>
-        </div>
-        <div class="seg">
-          <div class="sv" style="color:var(--text3)">${elapsed}ms</div><div class="sk">耗时</div>
-        </div>
+        <div class="seg ${passed===results.length?'green':passed>0?'yellow':'red'}"><div class="sv">${passed}/${results.length}</div><div class="sk">通过</div></div>
+        <div class="seg"><div class="sv" style="color:var(--accent2)">${avgIoU}</div><div class="sk">均IoU</div></div>
+        <div class="seg"><div class="sv" style="color:${oobN?'var(--accent3)':'var(--text3)'}">${oobN}</div><div class="sk">越界</div></div>
+        <div class="seg"><div class="sv" style="color:var(--text3)">${elapsed}ms</div><div class="sk">耗时</div></div>
       </div>`;
-
-  results.forEach(r => {
-    const iouClass = r.iou >= thresh ? 'iou-good' : r.iou >= thresh * 0.6 ? 'iou-mid' : 'iou-bad';
-    const barCol = r.iou >= thresh ? 'var(--accent)' : r.iou >= thresh * 0.6 ? 'var(--accent3)' : 'var(--danger)';
-    const oob = r.pred && isOOB(r.pred);
-    const gtId = r.gt.id.replace(/[^a-zA-Z0-9_]/g, '_') + '_' + modelSafeId;
-
-    html += `<div class="result-card">
+  results.forEach(r=>{
+    const icls=r.iou>=thresh?'iou-good':r.iou>=thresh*.6?'iou-mid':'iou-bad';
+    const bc=r.iou>=thresh?'var(--accent)':r.iou>=thresh*.6?'var(--accent3)':'var(--danger)';
+    const oob=r.pred&&isOOB(r.pred);
+    const gid=r.gt.id.replace(/[^a-zA-Z0-9_]/g,'_')+'_'+msid;
+    html+=`<div class="result-card">
       <div class="result-card-head">
-        <div class="result-label">${escapeHtml(r.gt.id)} <span style="color:var(--text3);font-size:11px;font-weight:400">${escapeHtml(r.gt.label || '')}</span>${oob ? `<span class="oob-tag">OOB</span>` : ''}</div>
-        <div class="iou-badge ${iouClass}">IoU ${r.iou.toFixed(3)}</div>
+        <div class="result-label">${esc(r.gt.id)} <span style="color:var(--text3);font-size:11px;font-weight:400">${esc(r.gt.label||'')}</span>${oob?'<span class="oob-tag">OOB</span>':''}</div>
+        <div class="iou-badge ${icls}">IoU ${r.iou.toFixed(3)}</div>
       </div>
       <div class="result-card-body">
-        <div class="score-bar-wrap">
-          <div class="score-bar-label"><span>交并比</span><span>${(r.iou * 100).toFixed(1)}%</span></div>
-          <div class="score-bar-bg"><div class="score-bar-fill" style="width:${r.iou * 100}%;background:${barCol}"></div></div>
-        </div>`;
-
-    if (r.pred) {
-      if (r.pred.label) {
-        html += `<div class="pred-label-tag" style="margin-top:7px">模型标注内容: <span class="pred-label-val">${escapeHtml(r.pred.label)}</span></div>`;
-      }
-      html += `<div class="bbox-compare" style="margin-top:8px">
-        <div class="bbox-col">
-          <div class="col-title">Ground Truth</div>
-          <div class="bbox-val">x:${r.gt.x} y:${r.gt.y}<br>w:${r.gt.w} h:${r.gt.h}</div>
-        </div>
-        <div class="bbox-col">
-          <div class="col-title" style="display:flex;align-items:center;justify-content:space-between">
-            <span>预测</span>
-          </div>
-          <div class="bbox-val">x:${r.pred.x} y:${r.pred.y}<br>w:${r.pred.w} h:${r.pred.h}</div>
-        </div>
-      </div>`;
-
-      if (r.metrics) {
-        html += `<div class="stats-row">
-          <div class="stat-item">
-            <div class="sv" style="color:${r.metrics.centerDist < 20 ? 'var(--accent)' : r.metrics.centerDist < 50 ? 'var(--accent3)' : 'var(--danger)'}">${r.metrics.centerDist}px</div>
-            <div class="sk">中心偏差</div>
-          </div>
-          <div class="stat-item">
-            <div class="sv" style="color:${r.metrics.sizeErr < 10 ? 'var(--accent)' : r.metrics.sizeErr < 30 ? 'var(--accent3)' : 'var(--danger)'}">${r.metrics.sizeErr}%</div>
-            <div class="sk">面积误差</div>
-          </div>
-          <div class="stat-item">
-            <div class="sv" style="color:${r.matched ? 'var(--accent)' : 'var(--danger)'}">${r.matched ? '✓ 通过' : '✗ 失败'}</div>
-            <div class="sk">结果</div>
-          </div>
-        </div>`;
-      }
-
-      html += `<details style="margin-top:6px">
-        <summary style="font-size:10px;color:var(--accent2);cursor:pointer;user-select:none;list-style:none">✎ 手动修改预测值重新校验</summary>
-        <div style="margin-top:6px">
-          <div class="pred-edit">
-            <div><input id="ep_x_${gtId}" type="number" value="${r.pred.x}" placeholder="x"><div class="pred-edit-label">x</div></div>
-            <div><input id="ep_y_${gtId}" type="number" value="${r.pred.y}" placeholder="y"><div class="pred-edit-label">y</div></div>
-            <div><input id="ep_w_${gtId}" type="number" value="${r.pred.w}" placeholder="w"><div class="pred-edit-label">w</div></div>
-            <div><input id="ep_h_${gtId}" type="number" value="${r.pred.h}" placeholder="h"><div class="pred-edit-label">h</div></div>
-          </div>
-          <div style="margin-top:4px">
-            <div class="field-label">标注内容描述</div>
-            <input id="ep_l_${gtId}" type="text" value="${escapeHtml(r.pred.label || '')}" placeholder="该框标记的内容..." style="height:26px;font-size:11px;padding:3px 7px">
-          </div>
-          <button class="btn-apply" onclick="applyEdit('${escJs(r.gt.id)}', '${escJs(model)}')">↻ 应用并重新计算 IoU</button>
-        </div>
-      </details>`;
-
-    } else {
-      html += `<div style="color:var(--danger);font-size:12px;margin-top:8px">⚠ 模型未返回该对象的预测框</div>
-      <details style="margin-top:6px">
-        <summary style="font-size:10px;color:var(--accent2);cursor:pointer;user-select:none;list-style:none">+ 手动添加预测框</summary>
-        <div style="margin-top:6px">
-          <div class="pred-edit">
-            <div><input id="ep_x_${gtId}" type="number" value="0" placeholder="x"><div class="pred-edit-label">x</div></div>
-            <div><input id="ep_y_${gtId}" type="number" value="0" placeholder="y"><div class="pred-edit-label">y</div></div>
-            <div><input id="ep_w_${gtId}" type="number" value="100" placeholder="w"><div class="pred-edit-label">w</div></div>
-            <div><input id="ep_h_${gtId}" type="number" value="100" placeholder="h"><div class="pred-edit-label">h</div></div>
-          </div>
-          <div style="margin-top:4px">
-            <input id="ep_l_${gtId}" type="text" value="" placeholder="标注内容描述" style="height:26px;font-size:11px;padding:3px 7px">
-          </div>
-          <button class="btn-apply" onclick="applyEdit('${escJs(r.gt.id)}', '${escJs(model)}')">↻ 应用</button>
-        </div>
-      </details>`;
+        <div class="score-bar-wrap"><div class="score-bar-label"><span>交并比</span><span>${(r.iou*100).toFixed(1)}%</span></div><div class="score-bar-bg"><div class="score-bar-fill" style="width:${r.iou*100}%;background:${bc}"></div></div></div>`;
+    if(r.pred){
+      if(r.pred.label)html+=`<div class="pred-label-tag" style="margin-top:6px">模型标注: <span class="pred-label-val">${esc(r.pred.label)}</span></div>`;
+      html+=`<div class="bbox-compare" style="margin-top:7px"><div class="bbox-col"><div class="col-title">Ground Truth</div><div class="bbox-val">x:${r.gt.x} y:${r.gt.y}<br>w:${r.gt.w} h:${r.gt.h}</div></div><div class="bbox-col"><div class="col-title">预测</div><div class="bbox-val">x:${r.pred.x} y:${r.pred.y}<br>w:${r.pred.w} h:${r.pred.h}</div></div></div>`;
+      if(r.metrics)html+=`<div class="stats-row"><div class="stat-item"><div class="sv" style="color:${r.metrics.centerDist<20?'var(--accent)':r.metrics.centerDist<50?'var(--accent3)':'var(--danger)'}">${r.metrics.centerDist}px</div><div class="sk">中心偏</div></div><div class="stat-item"><div class="sv" style="color:${r.metrics.sizeErr<10?'var(--accent)':r.metrics.sizeErr<30?'var(--accent3)':'var(--danger)'}">${r.metrics.sizeErr}%</div><div class="sk">面积差</div></div><div class="stat-item"><div class="sv" style="color:${r.matched?'var(--accent)':'var(--danger)'}">${r.matched?'✓':'✗'}</div><div class="sk">结果</div></div></div>`;
+      html+=`<details style="margin-top:5px"><summary style="font-size:10px;color:var(--accent2);cursor:pointer;user-select:none;list-style:none">✎ 手动修改预测值</summary><div style="margin-top:5px"><div class="pred-edit"><div><input id="ep_x_${gid}" type="number" value="${r.pred.x}"><div class="pred-edit-label">x</div></div><div><input id="ep_y_${gid}" type="number" value="${r.pred.y}"><div class="pred-edit-label">y</div></div><div><input id="ep_w_${gid}" type="number" value="${r.pred.w}"><div class="pred-edit-label">w</div></div><div><input id="ep_h_${gid}" type="number" value="${r.pred.h}"><div class="pred-edit-label">h</div></div></div><div style="margin-top:4px"><input id="ep_l_${gid}" type="text" value="${esc(r.pred.label||'')}" placeholder="标注描述" style="height:24px;font-size:11px;padding:3px 7px"></div><button class="btn-apply" onclick="applyEdit('${escJs(r.gt.id)}','${escJs(model)}')">↻ 应用并重算 IoU</button></div></details>`;
+    }else{
+      html+=`<div style="color:var(--danger);font-size:11px;margin-top:6px">⚠ 未返回该对象的预测框</div>`;
     }
-    html += `</div></div>`;
+    html+=`</div></div>`;
   });
-
-  html += `<div style="margin-top:8px">
-    <div class="field-label" style="padding:0 0 4px">模型原始响应</div>
-    <div class="log-box"><span class="raw-response">${escapeHtml(rawText)}</span></div>
-  </div></div></div>`;
-
-  document.getElementById('resultsBody').insertAdjacentHTML('beforeend', html);
+  html+=`<div style="margin-top:7px"><div class="fl" style="padding:0 0 3px">模型原始响应</div><div class="log-box"><span class="raw-response">${esc(rawText)}</span></div></div></div></div>`;
+  document.getElementById('currentResults').insertAdjacentHTML('beforeend',html);
+  document.getElementById('currentEmpty').style.display='none';
 }
 
-function showOnCanvas(model) {
-  if (state.allResults && state.allResults[model]) {
-    state.visibleModels.clear();
-    state.visibleModels.add(model);
-    updatePredButtons();
-    drawOverlay();
-    document.querySelectorAll('.model-card').forEach(c => c.style.borderColor = 'var(--accent2)');
-    const modelSafeId = btoa(encodeURIComponent(model)).replace(/[^a-zA-Z0-9]/g, '');
-    const card = document.getElementById(`card-${modelSafeId}`);
-    if (card) card.style.borderColor = 'var(--accent)';
+function renderModelError(model,msg){
+  document.getElementById('currentResults').insertAdjacentHTML('beforeend',`<div class="model-card" style="border-color:var(--danger)"><div class="model-card-header"><div class="model-card-name">${esc(model)}</div></div><div style="padding:10px"><div class="log-box" style="color:var(--danger)">${esc(msg)}</div></div></div>`);
+}
+
+function showOnCanvas(model){
+  if(state.allResults&&state.allResults[model]){
+    state.visibleModels.clear();state.visibleModels.add(model);updatePredButtons();drawOverlay();
+    document.querySelectorAll('.model-card').forEach(c=>c.style.borderColor='var(--accent2)');
+    const msid=btoa(encodeURIComponent(model)).replace(/[^a-zA-Z0-9]/g,'');
+    const card=document.getElementById(`card-${msid}`);if(card)card.style.borderColor='var(--accent)';
   }
 }
 
-function renderModelError(model, msg) {
-  const html = `
-    <div class="model-card" style="border-color: var(--danger)">
-      <div class="model-card-header"><div class="model-card-name">${escapeHtml(model)}</div></div>
-      <div style="padding: 10px;">
-        <div class="result-card">
-          <div class="result-card-head"><div class="result-label" style="color:var(--danger)">⚠ 请求失败</div></div>
-          <div class="result-card-body"><div class="log-box" style="color:var(--danger)">${escapeHtml(msg)}</div></div>
-        </div>
-      </div>
-    </div>`;
-  document.getElementById('resultsBody').insertAdjacentHTML('beforeend', html);
-}
-
-function applyEdit(gtId, model) {
-  const modelSafeId = btoa(encodeURIComponent(model)).replace(/[^a-zA-Z0-9]/g, '');
-  const domId = gtId.replace(/[^a-zA-Z0-9_]/g, '_') + '_' + modelSafeId;
-  const px = parseInt(document.getElementById(`ep_x_${domId}`).value) || 0;
-  const py = parseInt(document.getElementById(`ep_y_${domId}`).value) || 0;
-  const pw = parseInt(document.getElementById(`ep_w_${domId}`).value) || 0;
-  const ph = parseInt(document.getElementById(`ep_h_${domId}`).value) || 0;
-  const pl = document.getElementById(`ep_l_${domId}`).value || '';
-
-  const newPred = { id: gtId, label: pl, x: px, y: py, w: pw, h: ph };
-  const oob = isOOB(newPred);
-
-  if (state.allResults && state.allResults[model]) {
-    state.allResults[model].results = state.allResults[model].results.map(r => {
-      if (r.gt.id !== gtId) return r;
-      const iou = computeIoU(r.gt, newPred);
-      const thresh = parseFloat(document.getElementById('iouThreshold').value);
-      return { ...r, pred: { ...newPred, iou, oob }, iou, matched: iou >= thresh, metrics: computeMetrics(r.gt, newPred) };
+function applyEdit(gtId,model){
+  const msid=btoa(encodeURIComponent(model)).replace(/[^a-zA-Z0-9]/g,'');
+  const gid=gtId.replace(/[^a-zA-Z0-9_]/g,'_')+'_'+msid;
+  const px=parseInt(document.getElementById(`ep_x_${gid}`).value)||0;
+  const py=parseInt(document.getElementById(`ep_y_${gid}`).value)||0;
+  const pw=parseInt(document.getElementById(`ep_w_${gid}`).value)||0;
+  const ph=parseInt(document.getElementById(`ep_h_${gid}`).value)||0;
+  const pl=document.getElementById(`ep_l_${gid}`).value||'';
+  const newPred={id:gtId,label:pl,x:px,y:py,w:pw,h:ph};const oob=isOOB(newPred);
+  if(state.allResults&&state.allResults[model]){
+    const thresh=parseFloat(document.getElementById('iouThreshold').value);
+    state.allResults[model].results=state.allResults[model].results.map(r=>{
+      if(r.gt.id!==gtId)return r;
+      const iou=computeIoU(r.gt,newPred);
+      return{...r,pred:{...newPred,iou,oob},iou,matched:iou>=thresh,metrics:computeMetrics(r.gt,newPred)};
     });
-
-
-    document.getElementById('resultsBody').innerHTML = '';
-    for (const [m, data] of Object.entries(state.allResults)) {
-      renderModelResultCard(m, data.results, data.elapsed, data.rawText);
-    }
+    document.getElementById('currentResults').innerHTML='';
+    for(const[m,data]of Object.entries(state.allResults))renderModelCard(m,data.results,data.elapsed,data.rawText);
     showOnCanvas(model);
   }
 }
 
-
-// ─── Status ───────────────────────────────────────────────────────────────
-function setStatus(s, text, extra='') {
-  document.getElementById('statusDot').className='status-dot '+(s==='ok'?'ok':s==='busy'?'busy':s==='err'?'err':'');
-  document.getElementById('statusText').textContent=text;
-  document.getElementById('statusExtra').textContent=extra;
+// ════════════════════════════════════════════════════════
+// History
+// ════════════════════════════════════════════════════════
+function saveSession(thresh){
+  if(!state.allResults||!Object.keys(state.allResults).length)return;
+  const sess={
+    id:Date.now(),ts:new Date().toISOString(),
+    sceneName:state.scene.name,sceneKey:state.currentSceneName,
+    sceneObjects:state.scene.objects.map(o=>({...o})),
+    canvasW:CW,canvasH:CH,thresh,
+    bgImageB64:state.bgImageB64||null,
+    models:Object.entries(state.allResults).map(([model,data])=>({
+      model,elapsed:data.elapsed,rawText:data.rawText,
+      results:data.results.map(r=>({
+        gtId:r.gt.id,gtLabel:r.gt.label,
+        gt:{x:r.gt.x,y:r.gt.y,w:r.gt.w,h:r.gt.h},
+        pred:r.pred?{x:r.pred.x,y:r.pred.y,w:r.pred.w,h:r.pred.h,label:r.pred.label}:null,
+        iou:r.iou,matched:r.matched,metrics:r.metrics
+      }))
+    }))
+  };
+  state.sessions.unshift(sess);
+  renderHistoryList();
 }
 
-function escJs(s){return String(s).replace(/'/g,"\\'").replace(/\\/g,'\\\\');}
+function renderHistoryList(){
+  const n=state.sessions.length;
+  document.getElementById('historyCount').textContent=`(${n})`;
+  if(!n){document.getElementById('historyEmpty').style.display='';document.getElementById('historyList').innerHTML='';return;}
+  document.getElementById('historyEmpty').style.display='none';
+  let html='';
+  state.sessions.forEach((sess,idx)=>{
+    const ts=new Date(sess.ts).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const totalPassed=sess.models.reduce((s,m)=>s+m.results.filter(r=>r.matched).length,0);
+    const totalResults=sess.models.reduce((s,m)=>s+m.results.length,0);
+    const avgIoU=totalResults?(sess.models.reduce((s,m)=>s+m.results.reduce((a,r)=>a+r.iou,0),0)/totalResults).toFixed(2):'0';
+    html+=`<div class="sess-item ${idx===0?'active-sess':''}" onclick="restoreSession(${idx})">
+      <div class="sess-head"><div class="sess-title">${esc(sess.sceneName)}</div><div class="iou-badge ${totalPassed===totalResults?'iou-good':totalPassed>0?'iou-mid':'iou-bad'}">${totalPassed}/${totalResults}</div></div>
+      <div class="sess-body">
+        <span style="color:var(--accent2)">${sess.models.length} 个模型</span> · 均IoU <b>${avgIoU}</b> · ${ts}
+        ${sess.bgImageB64?'· <span style="color:var(--accent3)">含背景图</span>':''}
+      </div>
+    </div>`;
+  });
+  document.getElementById('historyList').innerHTML=html;
+}
 
-// ─── Init ─────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  initTheme();
-  // Ensure theme colors are resolved after DOM and styles are ready
-  setTimeout(() => {
-    loadScene('letters');
-  }, 50);
-});
+function restoreSession(idx){
+  const sess=state.sessions[idx];if(!sess)return;
+  if(SCENES[sess.sceneKey]){SCENES[sess.sceneKey].objects=sess.sceneObjects.map(o=>({...o}));state.scene=SCENES[sess.sceneKey];state.currentSceneName=sess.sceneKey;state.groundTruth=sess.sceneObjects.map(o=>({...o}));document.querySelectorAll('.scene-btn').forEach(b=>b.classList.toggle('active',b.dataset.scene===sess.sceneKey));}
+  const thresh=sess.thresh;
+  state.allResults={};state.visibleModels.clear();
+  sess.models.forEach(m=>{
+    const results=m.results.map(r=>({
+      gt:{...r.gt,id:r.gtId,label:r.gtLabel},
+      pred:r.pred?{...r.pred,iou:r.iou,oob:isOOB(r.pred)}:null,
+      iou:r.iou,matched:r.matched,metrics:r.metrics
+    }));
+    state.allResults[m.model]={results,elapsed:m.elapsed,rawText:m.rawText};
+  });
+  if(sess.models.length>0){state.visibleModels.add(sess.models[0].model);}
+  restoreBgFromB64(sess.bgImageB64||null);
+  resetPrompt();
+  document.getElementById('currentResults').innerHTML='';
+  document.getElementById('currentEmpty').style.display='none';
+  for(const[m,data]of Object.entries(state.allResults))renderModelCard(m,data.results,data.elapsed,data.rawText);
+  updatePredButtons();drawOverlay();switchTab('current');
+  setStatus('ok',`已还原: ${sess.sceneName} · ${sess.models.length} 个模型`);
+  document.querySelectorAll('.sess-item').forEach((el,i)=>el.classList.toggle('active-sess',i===idx));
+}
+
+// ════════════════════════════════════════════════════════
+// Export / Import
+// ════════════════════════════════════════════════════════
+function exportSessions(){
+  if(!state.sessions.length){alert('暂无历史记录可导出');return;}
+  const bgImages={};
+  const sessions=state.sessions.map(sess=>{
+    const s={...sess,bgImageB64:undefined};
+    if(sess.bgImageB64){const k='img_'+sess.id;bgImages[k]=sess.bgImageB64;s._bgKey=k;}
+    return s;
+  });
+  const blob=new Blob([JSON.stringify({version:'2.0',exportedAt:new Date().toISOString(),canvasW:CW,canvasH:CH,sessions,bgImages},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`bbox-bench-pro-${new Date().toISOString().slice(0,19).replace(/[T:]/g,'-')}.json`;a.click();URL.revokeObjectURL(url);
+}
+function importSessions(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.sessions||!Array.isArray(data.sessions))throw new Error('格式错误：缺少 sessions 字段');
+      const bgImages=data.bgImages||{};
+      const imported=data.sessions.map(sess=>sess._bgKey&&bgImages[sess._bgKey]?{...sess,bgImageB64:bgImages[sess._bgKey]}:sess);
+      state.sessions=[...imported,...state.sessions];
+      renderHistoryList();switchTab('history');
+      setStatus('ok',`已导入 ${imported.length} 条记录`);
+    }catch(err){alert('导入失败: '+err.message);}
+  };
+  reader.readAsText(file);event.target.value='';
+}
+
+// ════════════════════════════════════════════════════════
+// Background image
+// ════════════════════════════════════════════════════════
+const MAX_BG=2*1024*1024;
+function loadBgImage(event){
+  const file=event.target.files[0];if(!file)return;
+  if(!file.type.match(/image\/jpe?g/i)){alert('请上传 JPG/JPEG 格式图片');event.target.value='';return;}
+  if(file.size>MAX_BG){alert(`图片过大（${(file.size/1024/1024).toFixed(1)} MB），请上传 ≤ 2 MB 的 JPG`);event.target.value='';return;}
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      state.bgImageB64=e.target.result.split(',')[1];state.bgImageObj=img;
+      const prev=document.getElementById('bgPreview');prev.src=e.target.result;prev.style.display='block';
+      document.getElementById('bgMeta').textContent=`${img.naturalWidth}×${img.naturalHeight}px → ${CW}×${CH} · ${(file.size/1024).toFixed(0)} KB`;document.getElementById('bgMeta').style.display='block';
+      document.getElementById('bgOpacityRow').style.display='flex';document.getElementById('bgClearBtn').style.display='block';
+      document.querySelector('.bg-upload-zone .uz-text').innerHTML='点击更换背景图';
+      redrawScene();setStatus('ok',`背景图已加载：${img.naturalWidth}×${img.naturalHeight}`);
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);event.target.value='';
+}
+function clearBgImage(){
+  state.bgImageB64=null;state.bgImageObj=null;
+  document.getElementById('bgPreview').style.display='none';document.getElementById('bgMeta').style.display='none';
+  document.getElementById('bgOpacityRow').style.display='none';document.getElementById('bgClearBtn').style.display='none';
+  document.querySelector('.bg-upload-zone .uz-text').innerHTML='点击或拖入 JPG 图片<br><b>自动缩放为 600×450 背景</b>';
+  redrawScene();setStatus('ok','背景图已移除');
+}
+function restoreBgFromB64(b64){
+  if(!b64){clearBgImage();return;}
+  const img=new Image();
+  img.onload=()=>{state.bgImageB64=b64;state.bgImageObj=img;const du='data:image/jpeg;base64,'+b64;const p=document.getElementById('bgPreview');p.src=du;p.style.display='block';document.getElementById('bgMeta').textContent=`${img.naturalWidth}×${img.naturalHeight}px（已还原）`;document.getElementById('bgMeta').style.display='block';document.getElementById('bgOpacityRow').style.display='flex';document.getElementById('bgClearBtn').style.display='block';document.querySelector('.bg-upload-zone .uz-text').innerHTML='点击更换背景图';redrawScene();};
+  img.src='data:image/jpeg;base64,'+b64;
+}
+
+// ════════════════════════════════════════════════════════
+// Tab / Status / Util
+// ════════════════════════════════════════════════════════
+function switchTab(name){['current','history'].forEach(t=>{document.getElementById('tab-'+t).classList.toggle('active',t===name);document.getElementById('panel-'+t).classList.toggle('active',t===name);});}
+function setStatus(s,text){document.getElementById('statusDot').className='status-dot '+(s==='ok'?'ok':s==='busy'?'busy':s==='err'?'err':'');document.getElementById('statusText').textContent=text;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function escJs(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+
+// ════════════════════════════════════════════════════════
+// Theme
+// ════════════════════════════════════════════════════════
+function initTheme(){
+  const root=document.documentElement;
+  const saved=localStorage.getItem('bbox-pro-theme')||'dark';
+  root.setAttribute('data-theme',saved);
+  document.querySelectorAll('[data-theme-btn]').forEach(btn=>{
+    btn.classList.toggle('active',btn.getAttribute('data-theme-btn')===saved);
+    btn.addEventListener('click',()=>{const t=btn.getAttribute('data-theme-btn');root.setAttribute('data-theme',t);localStorage.setItem('bbox-pro-theme',t);document.querySelectorAll('[data-theme-btn]').forEach(b=>b.classList.toggle('active',b===btn));setTimeout(()=>{drawBoundary();drawOverlay();},50);});
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// Init
+// ════════════════════════════════════════════════════════
+initTheme();
+const stEl=document.getElementById('serverType');
+renderServerSelect(stEl,'lmstudio');
+stEl.addEventListener('change',()=>applyServerProfile(stEl.value));
+applyServerProfile(stEl.value);
+document.getElementById('fetchBtn').addEventListener('click',fetchModelsWrapper);
+document.getElementById('runBtn').disabled=true;
+setTimeout(()=>loadScene('letters'),50);
 </script>
-</body></html>
+</body>
+</html>
