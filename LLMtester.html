@@ -962,8 +962,10 @@ function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;
 
 function downloadResults() {
   const type=serverTypeEl.value, profile=SERVERS[type];
+  const sysPrompt=getSystemPrompt();
+  const sysSummary=`系统提示词: ${sysPrompt || '(无)'}`;
   const attSummary=attachments.length?'\n附件:\n'+attachments.map(a=>`  #${a.uploadOrder} ${a.name} [标记: ${effectiveLabel(a)}]`).join('\n'):'';
-  const out=[`LLM 多模态基准测试报告`,`时间: ${new Date().toLocaleString()}`,`服务: ${profile.label}`,`地址: ${serverUrlEl.value}`,`模型: ${Object.keys(results).join(', ')}`,attSummary,'='.repeat(60)];
+  const out=[`LLM 多模态基准测试报告`,`时间: ${new Date().toLocaleString()}`,`服务: ${profile.label}`,`地址: ${serverUrlEl.value}`,`模型: ${Object.keys(results).join(', ')}`,sysSummary,attSummary,'='.repeat(60)];
   for(const[model,data]of Object.entries(results)){
     out.push(`\n=== 模型: ${model} ===`);
     for(let i=0;i<data.questions.length;i++){
